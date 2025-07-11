@@ -101,7 +101,7 @@ public class TradeScraperUtil {
         List<Trade> trades = new ArrayList<>();
         
         try {
-            String url = year == 0 ? SPOTRAC_BASE_URL : SPOTRAC_BASE_URL + "/" + year;
+            String url = year == 0 ? SPOTRAC_BASE_URL : SPOTRAC_BASE_URL + "/" + year + "/start/" + year + "-01-01/end/" + year + "-12-31";
             System.out.println("🌐 Scraping trades from: " + url);
             
             Document doc = Jsoup.connect(url)

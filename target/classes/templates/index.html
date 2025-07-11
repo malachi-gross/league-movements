@@ -429,6 +429,11 @@
                 <option value="Southwest">Southwest</option>
             </select>
             
+            <label for="teamFilter">Team:</label>
+            <select id="teamFilter" class="filter-select">
+                <option value="all">All Teams</option>
+            </select>
+
             <label for="yearFilter">Trade Year:</label>
             <select id="yearFilter" class="filter-select">
                 <option value="all">All Years</option>
@@ -502,6 +507,7 @@
                     conference: 'all',
                     division: 'all',
                     year: 'all',
+                    team: 'all',
                     showTrades: true
                 };
                 
@@ -519,6 +525,7 @@
                     this.initEventListeners();
                     this.updateStats();
                     this.populateYearFilter();
+                    this.populateTeamFilter();
                     this.showLoading(false);
                 } catch (error) {
                     console.error('Error initializing NBA Teams Map:', error);
@@ -537,6 +544,7 @@
                     console.log('Loaded teams:', this.teams);
                 } catch (error) {
                     console.error('Error loading teams:', error);
+                    this.teams = this.getMockTeams();
                 }
             }
             
@@ -550,7 +558,98 @@
                     console.log('Loaded trades:', this.trades);
                 } catch (error) {
                     console.error('Error loading trades:', error);
+                    this.trades = []; // No fallback mock data
                 }
+            }
+            
+            getMockTeams() {
+                return [
+                    {name: "Boston Celtics", city: "Boston", conference: "Eastern", division: "Atlantic", latitude: 42.3601, longitude: -71.0589, logoPath: "/images/teams/celtics.png", primaryColor: "#007A33"},
+                    {name: "Brooklyn Nets", city: "Brooklyn", conference: "Eastern", division: "Atlantic", latitude: 40.6782, longitude: -73.9442, logoPath: "/images/teams/nets.png", primaryColor: "#000000"},
+                    {name: "New York Knicks", city: "New York", conference: "Eastern", division: "Atlantic", latitude: 40.7128, longitude: -74.0060, logoPath: "/images/teams/knicks.png", primaryColor: "#006BB6"},
+                    {name: "Philadelphia 76ers", city: "Philadelphia", conference: "Eastern", division: "Atlantic", latitude: 39.9526, longitude: -75.1652, logoPath: "/images/teams/76ers.png", primaryColor: "#006BB6"},
+                    {name: "Toronto Raptors", city: "Toronto", conference: "Eastern", division: "Atlantic", latitude: 43.6532, longitude: -79.3832, logoPath: "/images/teams/raptors.png", primaryColor: "#CE1141"},
+                    {name: "Chicago Bulls", city: "Chicago", conference: "Eastern", division: "Central", latitude: 41.8781, longitude: -87.6298, logoPath: "/images/teams/bulls.png", primaryColor: "#CE1141"},
+                    {name: "Cleveland Cavaliers", city: "Cleveland", conference: "Eastern", division: "Central", latitude: 41.4993, longitude: -81.6944, logoPath: "/images/teams/cavaliers.png", primaryColor: "#860038"},
+                    {name: "Detroit Pistons", city: "Detroit", conference: "Eastern", division: "Central", latitude: 42.3314, longitude: -83.0458, logoPath: "/images/teams/pistons.png", primaryColor: "#C8102E"},
+                    {name: "Indiana Pacers", city: "Indianapolis", conference: "Eastern", division: "Central", latitude: 39.7684, longitude: -86.1581, logoPath: "/images/teams/pacers.png", primaryColor: "#002D62"},
+                    {name: "Milwaukee Bucks", city: "Milwaukee", conference: "Eastern", division: "Central", latitude: 43.0389, longitude: -87.9065, logoPath: "/images/teams/bucks.png", primaryColor: "#00471B"},
+                    {name: "Atlanta Hawks", city: "Atlanta", conference: "Eastern", division: "Southeast", latitude: 33.7490, longitude: -84.3880, logoPath: "/images/teams/hawks.png", primaryColor: "#E03A3E"},
+                    {name: "Charlotte Hornets", city: "Charlotte", conference: "Eastern", division: "Southeast", latitude: 35.2271, longitude: -80.8431, logoPath: "/images/teams/hornets.png", primaryColor: "#1D1160"},
+                    {name: "Miami Heat", city: "Miami", conference: "Eastern", division: "Southeast", latitude: 25.7617, longitude: -80.1918, logoPath: "/images/teams/heat.png", primaryColor: "#98002E"},
+                    {name: "Orlando Magic", city: "Orlando", conference: "Eastern", division: "Southeast", latitude: 28.5383, longitude: -81.3792, logoPath: "/images/teams/magic.png", primaryColor: "#0077C0"},
+                    {name: "Washington Wizards", city: "Washington", conference: "Eastern", division: "Southeast", latitude: 38.9072, longitude: -77.0369, logoPath: "/images/teams/wizards.png", primaryColor: "#002B5C"},
+                    {name: "Denver Nuggets", city: "Denver", conference: "Western", division: "Northwest", latitude: 39.7392, longitude: -104.9903, logoPath: "/images/teams/nuggets.png", primaryColor: "#0E2240"},
+                    {name: "Minnesota Timberwolves", city: "Minneapolis", conference: "Western", division: "Northwest", latitude: 44.9778, longitude: -93.2650, logoPath: "/images/teams/timberwolves.png", primaryColor: "#0C2340"},
+                    {name: "Oklahoma City Thunder", city: "Oklahoma City", conference: "Western", division: "Northwest", latitude: 35.4676, longitude: -97.5164, logoPath: "/images/teams/thunder.png", primaryColor: "#007AC1"},
+                    {name: "Portland Trail Blazers", city: "Portland", conference: "Western", division: "Northwest", latitude: 45.5152, longitude: -122.6784, logoPath: "/images/teams/blazers.png", primaryColor: "#E03A3E"},
+                    {name: "Utah Jazz", city: "Salt Lake City", conference: "Western", division: "Northwest", latitude: 40.7608, longitude: -111.8910, logoPath: "/images/teams/jazz.png", primaryColor: "#002B5C"},
+                    {name: "Golden State Warriors", city: "San Francisco", conference: "Western", division: "Pacific", latitude: 37.7749, longitude: -122.4194, logoPath: "/images/teams/warriors.png", primaryColor: "#1D428A"},
+                    {name: "LA Clippers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0430, longitude: -118.2673, logoPath: "/images/teams/clippers.png", primaryColor: "#C8102E"},
+                    {name: "Los Angeles Lakers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0614, longitude: -118.2221, logoPath: "/images/teams/lakers.png", primaryColor: "#552583"},
+                    {name: "Phoenix Suns", city: "Phoenix", conference: "Western", division: "Pacific", latitude: 33.4484, longitude: -112.0740, logoPath: "/images/teams/suns.png", primaryColor: "#1D1160"},
+                    {name: "Sacramento Kings", city: "Sacramento", conference: "Western", division: "Pacific", latitude: 38.5816, longitude: -121.4944, logoPath: "/images/teams/kings.png", primaryColor: "#5A2D81"},
+                    {name: "Dallas Mavericks", city: "Dallas", conference: "Western", division: "Southwest", latitude: 32.7767, longitude: -96.7970, logoPath: "/images/teams/mavericks.png", primaryColor: "#00538C"},
+                    {name: "Houston Rockets", city: "Houston", conference: "Western", division: "Southwest", latitude: 29.7604, longitude: -95.3698, logoPath: "/images/teams/rockets.png", primaryColor: "#CE1141"},
+                    {name: "Memphis Grizzlies", city: "Memphis", conference: "Western", division: "Southwest", latitude: 35.1495, longitude: -90.0490, logoPath: "/images/teams/grizzlies.png", primaryColor: "#5D76A9"},
+                    {name: "New Orleans Pelicans", city: "New Orleans", conference: "Western", division: "Southwest", latitude: 29.9511, longitude: -90.0715, logoPath: "/images/teams/pelicans.png", primaryColor: "#0C2340"},
+                    {name: "San Antonio Spurs", city: "San Antonio", conference: "Western", division: "Southwest", latitude: 29.4241, longitude: -98.4936, logoPath: "/images/teams/spurs.png", primaryColor: "#C4CED4"}
+                ];
+            }
+            
+            getMockTrades() {
+                return [
+                    {
+                        id: "trade_1",
+                        tradeDate: "2024-02-08",
+                        fromTeam: "Brooklyn Nets",
+                        toTeam: "Phoenix Suns", 
+                        playersTraded: ["Kevin Durant"],
+                        assetsTraded: ["2024 1st Round Pick"],
+                        description: "Brooklyn acquires Mikal Bridges (SF), Cam Johnson (SF), 2023 1st round pick (unprotected), 2025 1st round pick (protected), 2027 1st round pick (unprotected), 2029 1st round pick swap Phoenix acquires Kevin Durant (SF)",
+                        year: 2024
+                    },
+                    {
+                        id: "trade_2", 
+                        tradeDate: "2024-03-15",
+                        fromTeam: "Los Angeles Lakers",
+                        toTeam: "Minnesota Timberwolves",
+                        playersTraded: ["Russell Westbrook"],
+                        assetsTraded: ["2024 2nd Round Pick"],
+                        description: "Lakers acquires D'Angelo Russell (PG), Malik Beasley (SG), Jarred Vanderbilt (PF) Minnesota acquires Russell Westbrook (PG), 2027 1st round pick (unprotected), 2029 1st round pick swap",
+                        year: 2024
+                    },
+                    {
+                        id: "trade_3",
+                        tradeDate: "2023-02-14", 
+                        fromTeam: "Chicago Bulls",
+                        toTeam: "Toronto Raptors",
+                        playersTraded: ["DeMar DeRozan"],
+                        assetsTraded: ["2023 1st Round Pick"],
+                        description: "Chicago acquires OG Anunoby (SF), Gary Trent Jr. (SG) Toronto acquires DeMar DeRozan (SF), 2024 1st round pick (protected)",
+                        year: 2023
+                    },
+                    {
+                        id: "trade_4",
+                        tradeDate: "2024-06-27",
+                        fromTeam: "Miami Heat", 
+                        toTeam: "Boston Celtics",
+                        playersTraded: ["Tyler Herro"],
+                        assetsTraded: ["2025 1st Round Pick"],
+                        description: "Miami acquires Derrick White (PG), Robert Williams III (C) Boston acquires Tyler Herro (SG), 2025 1st round pick (lottery protected)",
+                        year: 2024
+                    },
+                    {
+                        id: "trade_5",
+                        tradeDate: "2023-12-20",
+                        fromTeam: "Golden State Warriors",
+                        toTeam: "Dallas Mavericks", 
+                        playersTraded: ["Klay Thompson"],
+                        assetsTraded: ["2024 2nd Round Pick"],
+                        description: "Golden State acquires Tim Hardaway Jr. (SG), Richaun Holmes (C), 2024 2nd round pick Dallas acquires Klay Thompson (SG), Moses Moody (SF)",
+                        year: 2023
+                    }
+                ];
             }
             
             initMap() {
@@ -884,6 +983,7 @@
                 const conferenceFilter = document.getElementById('conferenceFilter');
                 const divisionFilter = document.getElementById('divisionFilter');
                 const yearFilter = document.getElementById('yearFilter');
+                const teamFilter = document.getElementById('teamFilter');
                 const showTrades = document.getElementById('showTrades');
                 
                 conferenceFilter.addEventListener('change', (e) => {
@@ -898,6 +998,11 @@
                 
                 yearFilter.addEventListener('change', (e) => {
                     this.currentFilters.year = e.target.value;
+                    this.applyFilters();
+                });
+                
+                teamFilter.addEventListener('change', (e) => {
+                    this.currentFilters.team = e.target.value;
                     this.applyFilters();
                 });
                 
@@ -924,22 +1029,31 @@
                 let visibleTeamsCount = 0;
                 let visibleTradesCount = 0;
                 
-                // Filter teams
+                // Filter teams with opacity instead of removing
                 this.markers.forEach(({marker, team}) => {
                     const conferenceMatch = this.currentFilters.conference === 'all' || 
                                           team.conference === this.currentFilters.conference;
                     const divisionMatch = this.currentFilters.division === 'all' || 
                                         team.division === this.currentFilters.division;
+                    const teamMatch = this.currentFilters.team === 'all' || 
+                                     team.name === this.currentFilters.team;
                     
-                    if (conferenceMatch && divisionMatch) {
-                        marker.addTo(this.map);
+                    // Always add to map, but adjust opacity
+                    marker.addTo(this.map);
+                    
+                    if (conferenceMatch && divisionMatch && teamMatch) {
+                        // Team matches filters - full opacity
+                        marker.setOpacity(1);
+                        this.setMarkerOpacity(marker, 1);
                         visibleTeamsCount++;
                     } else {
-                        marker.remove();
+                        // Team doesn't match - very low opacity
+                        marker.setOpacity(0.15);
+                        this.setMarkerOpacity(marker, 0.15);
                     }
                 });
                 
-                // Filter trades - only show trades between visible teams
+                // Filter trades with opacity - show all trades but adjust visibility
                 this.tradeLines.forEach(({line, trade}) => {
                     const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
                     const toTeam = this.teams.find(t => t.name === trade.toTeam);
@@ -949,27 +1063,87 @@
                         return;
                     }
                     
-                    // Check if both teams match the current filters
+                    // Check if teams match filters
                     const fromTeamMatches = (this.currentFilters.conference === 'all' || fromTeam.conference === this.currentFilters.conference) &&
-                                           (this.currentFilters.division === 'all' || fromTeam.division === this.currentFilters.division);
+                                           (this.currentFilters.division === 'all' || fromTeam.division === this.currentFilters.division) &&
+                                           (this.currentFilters.team === 'all' || fromTeam.name === this.currentFilters.team);
                     
                     const toTeamMatches = (this.currentFilters.conference === 'all' || toTeam.conference === this.currentFilters.conference) &&
-                                         (this.currentFilters.division === 'all' || toTeam.division === this.currentFilters.division);
+                                         (this.currentFilters.division === 'all' || toTeam.division === this.currentFilters.division) &&
+                                         (this.currentFilters.team === 'all' || toTeam.name === this.currentFilters.team);
                     
                     const yearMatch = this.currentFilters.year === 'all' || 
                                     trade.year.toString() === this.currentFilters.year;
                     const showTrades = this.currentFilters.showTrades;
                     
-                    // Only show trade if BOTH teams match the conference/division filter
-                    if (fromTeamMatches && toTeamMatches && yearMatch && showTrades) {
+                    if (showTrades) {
                         line.addTo(this.map);
-                        visibleTradesCount++;
+                        
+                        // Determine opacity based on team and year matches
+                        let opacity = 0.8;
+                        let weight = 3;
+                        
+                        // If specific team is selected, highlight trades involving that team
+                        if (this.currentFilters.team !== 'all') {
+                            if (fromTeam.name === this.currentFilters.team || toTeam.name === this.currentFilters.team) {
+                                opacity = 1.0;
+                                weight = 4;
+                                visibleTradesCount++;
+                            } else {
+                                opacity = 0.1;
+                                weight = 2;
+                            }
+                        }
+                        // Otherwise use conference/division filtering
+                        else if ((fromTeamMatches && toTeamMatches) && yearMatch) {
+                            opacity = 0.8;
+                            weight = 3;
+                            visibleTradesCount++;
+                        } else if ((fromTeamMatches || toTeamMatches) && yearMatch) {
+                            // One team matches - medium opacity
+                            opacity = 0.3;
+                            weight = 2;
+                        } else if (yearMatch) {
+                            // Only year matches - low opacity
+                            opacity = 0.1;
+                            weight = 2;
+                        } else {
+                            // Nothing matches - very low opacity
+                            opacity = 0.05;
+                            weight = 1;
+                        }
+                        
+                        line.setStyle({ opacity: opacity, weight: weight });
                     } else {
                         line.remove();
                     }
                 });
                 
                 this.updateStats(visibleTeamsCount, visibleTradesCount);
+            }
+            
+            setMarkerOpacity(marker, opacity) {
+                const element = marker.getElement();
+                if (element) {
+                    const markerDiv = element.querySelector('.custom-marker');
+                    if (markerDiv) {
+                        markerDiv.style.opacity = opacity;
+                    }
+                }
+            }
+            
+            populateTeamFilter() {
+                const teamFilter = document.getElementById('teamFilter');
+                
+                // Sort teams alphabetically by name
+                const sortedTeams = [...this.teams].sort((a, b) => a.name.localeCompare(b.name));
+                
+                sortedTeams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.name;
+                    option.textContent = team.name;
+                    teamFilter.appendChild(option);
+                });
             }
             
             populateYearFilter() {
