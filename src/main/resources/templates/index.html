@@ -428,12 +428,12 @@
                 <option value="Pacific">Pacific</option>
                 <option value="Southwest">Southwest</option>
             </select>
-            
+
             <label for="teamFilter">Team:</label>
             <select id="teamFilter" class="filter-select">
                 <option value="all">All Teams</option>
             </select>
-
+            
             <label for="yearFilter">Trade Year:</label>
             <select id="yearFilter" class="filter-select">
                 <option value="all">All Years</option>
@@ -793,7 +793,8 @@
                 line._tradeData = {
                     fromTeam: fromTeam,
                     toTeam: toTeam,
-                    curvePoints: curvePoints
+                    curvePoints: curvePoints,
+                    trade: trade
                 };
                 
                 // Parse trade details to get what each team received
@@ -830,13 +831,20 @@
                     className: 'trade-popup-container'
                 });
                 
-                line.on('mouseover', function() {
-                    this.setStyle({ weight: 5, opacity: 1 });
-                });
+                // Store references to hover functions so we can remove them later
+                line._hoverIn = function() {
+                    this.setStyle({ weight: 5, opacity: Math.min(1.0, this.options.opacity + 0.2) });
+                };
                 
-                line.on('mouseout', function() {
-                    this.setStyle({ weight: 3, opacity: 0.8 });
-                });
+                line._hoverOut = function() {
+                    // Get the current filter state to restore proper opacity/weight
+                    const tradeLineData = this._tradeData;
+                    if (tradeLineData) {
+                        const currentOpacity = this.options.opacity;
+                        const currentWeight = this.options.weight;
+                        this.setStyle({ weight: currentWeight, opacity: currentOpacity });
+                    }
+                };
                 
                 return line;
             }
@@ -1114,12 +1122,44 @@
                         }
                         
                         line.setStyle({ opacity: opacity, weight: weight });
+                        
+                        // Manage hover events based on visibility
+                        this.updateTradeLineHover(line, opacity, weight);
+                        
                     } else {
                         line.remove();
                     }
                 });
                 
                 this.updateStats(visibleTeamsCount, visibleTradesCount);
+            }
+            
+            updateTradeLineHover(line, opacity, weight) {
+                // Remove existing hover events
+                line.off('mouseover');
+                line.off('mouseout');
+                
+                // Only add hover events if the line has significant visibility (opacity > 0.2)
+                if (opacity > 0.2) {
+                    line.on('mouseover', function() {
+                        this.setStyle({ 
+                            weight: Math.max(weight + 2, 5), 
+                            opacity: Math.min(1.0, opacity + 0.2) 
+                        });
+                    });
+                    
+                    line.on('mouseout', function() {
+                        this.setStyle({ weight: weight, opacity: opacity });
+                    });
+                    
+                    // Change cursor to pointer for interactive lines
+                    line.getElement().style.cursor = 'pointer';
+                } else {
+                    // For very low opacity lines, set cursor to default (not interactive)
+                    if (line.getElement()) {
+                        line.getElement().style.cursor = 'default';
+                    }
+                }
             }
             
             setMarkerOpacity(marker, opacity) {
