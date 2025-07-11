@@ -1,5 +1,9 @@
-/Users/malachigross/league-movements/src/main/java/com/nba/map/service/NbaTeamService.java
-/Users/malachigross/league-movements/src/main/java/com/nba/map/controller/MapController.java
-/Users/malachigross/league-movements/src/main/java/com/nba/map/model/NbaTeam.java
-/Users/malachigross/league-movements/src/main/java/com/nba/map/NbaTeamsMapApplication.java
-/Users/malachigross/league-movements/src/main/java/com/nba/map/controller/NbaTeamController.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/controller/TradeController.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/controller/NbaTeamController.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/service/TradeService.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/model/Trade.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/util/TradeScraperUtil.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/service/NbaTeamService.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/model/NbaTeam.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/NbaTeamsMapApplication.java
+/Users/malachigross/nba-teams-map/src/main/java/com/nba/map/controller/MapController.java

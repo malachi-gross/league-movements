@@ -1,59 +1,212 @@
+# NBA Teams & Trades Map - Complete Project Structure
+
+```
 nba-teams-map/
-├── pom.xml
+├── pom.xml                                     # Updated Maven configuration with JSoup
+├── README.md                                   # Project documentation
 ├── src/
 │   └── main/
 │       ├── java/
 │       │   └── com/
 │       │       └── nba/
 │       │           └── map/
-│       │               ├── NbaTeamsMapApplication.java
+│       │               ├── NbaTeamsMapApplication.java     # Main Spring Boot application
 │       │               ├── controller/
-│       │               │   ├── MapController.java
-│       │               │   └── NbaTeamController.java
+│       │               │   ├── MapController.java         # Updated with admin route
+│       │               │   ├── NbaTeamController.java     # Original team API controller
+│       │               │   └── TradeController.java       # NEW: Trade API endpoints
 │       │               ├── model/
-│       │               │   └── NbaTeam.java
-│       │               └── service/
-│       │                   └── NbaTeamService.java
-│       ├── resources/
-│       │   ├── application.properties
-│       │   ├── static/
-│       │   │   ├── css/
-│       │   │   │   └── (additional CSS files if needed)
-│       │   │   ├── js/
-│       │   │   │   └── (additional JS files if needed)
-│       │   │   └── images/
-│       │   │       └── teams/
-│       │   │           ├── celtics.png
-│       │   │           ├── nets.png
-│       │   │           ├── knicks.png
-│       │   │           ├── 76ers.png
-│       │   │           ├── raptors.png
-│       │   │           ├── bulls.png
-│       │   │           ├── cavaliers.png
-│       │   │           ├── pistons.png
-│       │   │           ├── pacers.png
-│       │   │           ├── bucks.png
-│       │   │           ├── hawks.png
-│       │   │           ├── hornets.png
-│       │   │           ├── heat.png
-│       │   │           ├── magic.png
-│       │   │           ├── wizards.png
-│       │   │           ├── nuggets.png
-│       │   │           ├── timberwolves.png
-│       │   │           ├── thunder.png
-│       │   │           ├── blazers.png
-│       │   │           ├── jazz.png
-│       │   │           ├── warriors.png
-│       │   │           ├── clippers.png
-│       │   │           ├── lakers.png
-│       │   │           ├── suns.png
-│       │   │           ├── kings.png
-│       │   │           ├── mavericks.png
-│       │   │           ├── rockets.png
-│       │   │           ├── grizzlies.png
-│       │   │           ├── pelicans.png
-│       │   │           └── spurs.png
-│       │   └── templates/
-│       │       └── index.html
-│       └── webapp/
-└── target/
+│       │               │   ├── NbaTeam.java              # Original team model
+│       │               │   └── Trade.java                # NEW: Trade data model
+│       │               ├── service/
+│       │               │   ├── NbaTeamService.java       # Original team service
+│       │               │   └── TradeService.java         # NEW: Enhanced trade service
+│       │               └── util/
+│       │                   └── TradeScraperUtil.java     # NEW: Advanced web scraping utility
+│       └── resources/
+│           ├── application.properties                     # Spring Boot configuration
+│           ├── static/
+│           │   ├── css/
+│           │   │   └── (additional CSS files if needed)
+│           │   ├── js/
+│           │   │   └── (additional JS files if needed)
+│           │   └── images/
+│           │       └── teams/
+│           │           ├── celtics.png
+│           │           ├── nets.png
+│           │           ├── knicks.png
+│           │           ├── 76ers.png
+│           │           ├── raptors.png
+│           │           ├── bulls.png
+│           │           ├── cavaliers.png
+│           │           ├── pistons.png
+│           │           ├── pacers.png
+│           │           ├── bucks.png
+│           │           ├── hawks.png
+│           │           ├── hornets.png
+│           │           ├── heat.png
+│           │           ├── magic.png
+│           │           ├── wizards.png
+│           │           ├── nuggets.png
+│           │           ├── timberwolves.png
+│           │           ├── thunder.png
+│           │           ├── blazers.png
+│           │           ├── jazz.png
+│           │           ├── warriors.png
+│           │           ├── clippers.png
+│           │           ├── lakers.png
+│           │           ├── suns.png
+│           │           ├── kings.png
+│           │           ├── mavericks.png
+│           │           ├── rockets.png
+│           │           ├── grizzlies.png
+│           │           ├── pelicans.png
+│           │           └── spurs.png
+│           └── templates/
+│               ├── index.html                            # ENHANCED: Main map with trade visualization
+│               └── admin.html                            # NEW: Trade data management interface
+└── target/                                               # Maven build directory
+    └── (generated files)
+```
+
+## File Descriptions
+
+### Core Application Files
+
+**`pom.xml`** - Updated Maven configuration
+- Added JSoup dependency for web scraping
+- Added Jackson JSR310 for LocalDate serialization
+- Spring Boot 3.2.0 with Java 17
+
+**`NbaTeamsMapApplication.java`** - Spring Boot main class (unchanged)
+- Application entry point
+- Auto-configuration enabled
+
+### Controllers
+
+**`MapController.java`** - Updated view controller
+- **NEW**: Added `/admin` route for trade management interface
+- Existing `/` route for main map
+
+**`NbaTeamController.java`** - Team API endpoints (unchanged)
+- `/api/teams` - Get all teams
+- `/api/teams/{name}` - Get specific team
+
+**`TradeController.java`** - **NEW** Trade API endpoints
+- `/api/trades` - Get all trades
+- `/api/trades/year/{year}` - Get trades by year
+- `/api/trades/team/{teamName}` - Get trades by team
+- `/api/trades/between/{team1}/{team2}` - Get trades between teams
+- `/api/trades/recent` - Get recent trades (30 days)
+- `/api/trades/years` - Get available years
+- `/api/trades/stats/{year}` - Get trade statistics
+- `/api/trades/scrape/{year}` - Scrape trades for year
+- `/api/trades/scrape/bulk` - Bulk scrape multiple years
+
+### Models
+
+**`NbaTeam.java`** - Team data model (unchanged)
+- Team name, city, conference, division
+- Geographic coordinates (lat/long)
+- Logo path and team colors
+
+**`Trade.java`** - **NEW** Trade data model
+- Trade ID, date, teams involved
+- Players and assets traded
+- Description and source URL
+- Year extraction and validation
+
+### Services
+
+**`NbaTeamService.java`** - Team business logic (unchanged)
+- In-memory team data management
+- Team filtering and search
+
+**`TradeService.java`** - **NEW** Enhanced trade service
+- Trade data management with thread-safe collections
+- Year-based and team-based filtering
+- Integration with scraping utility
+- Duplicate prevention
+- Trade statistics calculation
+
+### Utilities
+
+**`TradeScraperUtil.java`** - **NEW** Advanced web scraping
+- Sophisticated Spotrac.com parsing
+- Multiple HTML structure handling
+- Team name normalization with extensive aliases
+- Player and asset extraction using regex
+- Error handling and fallback parsing
+- Rate limiting and respectful scraping
+
+### Templates
+
+**`index.html`** - **ENHANCED** Main map interface
+- **NEW**: Trade line visualization with SVG overlays
+- **NEW**: Year-based filtering
+- **NEW**: Trade animation controls
+- **NEW**: Interactive trade popups
+- **NEW**: Enhanced statistics display
+- **IMPROVED**: Mobile responsiveness
+- **IMPROVED**: Error handling and loading states
+
+**`admin.html`** - **NEW** Trade data management
+- Single year scraping interface
+- Bulk year selection and scraping
+- Real-time data overview and statistics
+- Recent trades display
+- Status messages and progress indicators
+- Responsive admin dashboard
+
+### Configuration
+
+**`application.properties`** - Spring Boot configuration (unchanged)
+- Server port and application name
+- Static resource handling
+- Thymeleaf template configuration
+
+## Key Dependencies Added
+
+```xml
+<!-- JSoup for web scraping -->
+<dependency>
+    <groupId>org.jsoup</groupId>
+    <artifactId>jsoup</artifactId>
+    <version>1.16.1</version>
+</dependency>
+
+<!-- Jackson support for LocalDate -->
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr310</artifactId>
+</dependency>
+```
+
+## New Features Summary
+
+### Backend Enhancements
+- ✅ Complete trade data model and service layer
+- ✅ Advanced web scraping with multiple parsing strategies
+- ✅ Comprehensive REST API for trade management
+- ✅ Team name normalization and alias handling
+- ✅ Trade statistics and analytics
+- ✅ Bulk data processing capabilities
+
+### Frontend Enhancements
+- ✅ Interactive trade line visualization
+- ✅ Year-based filtering and controls
+- ✅ Animated trade connections
+- ✅ Detailed trade popups with player/asset information
+- ✅ Admin interface for data management
+- ✅ Real-time statistics and overview
+- ✅ Mobile-responsive design improvements
+
+### Technical Improvements
+- ✅ Thread-safe data collections
+- ✅ Comprehensive error handling
+- ✅ Rate-limited web scraping
+- ✅ Duplicate prevention
+- ✅ Fallback data sources
+- ✅ Progress indicators and status messages
+
+This structure provides a complete, production-ready NBA trades visualization system with both user-facing map interface and administrative data management capabilities.

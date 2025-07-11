@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Teams Interactive Map</title>
+    <title>NBA Teams Interactive Map - Trades & Movement</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -56,14 +56,16 @@
             display: flex;
             gap: 1rem;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .filter-group label {
             font-weight: 600;
             color: #ccc;
+            white-space: nowrap;
         }
         
-        .filter-select {
+        .filter-select, .filter-checkbox {
             padding: 0.5rem 1rem;
             border: 1px solid #555;
             border-radius: 6px;
@@ -79,10 +81,23 @@
             box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
         }
         
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #007bff;
+        }
+        
         .stats {
             display: flex;
             gap: 2rem;
             align-items: center;
+            flex-wrap: wrap;
         }
         
         .stat-item {
@@ -102,7 +117,7 @@
         
         #map {
             width: 100%;
-            height: calc(100vh - 200px);
+            height: calc(100vh - 250px);
             border: none;
         }
         
@@ -166,6 +181,117 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.6);
         }
         
+        .trade-line {
+            stroke: #ff6b35;
+            stroke-width: 3;
+            stroke-opacity: 0.8;
+            fill: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .trade-line:hover {
+            stroke-width: 5;
+            stroke-opacity: 1;
+        }
+        
+        .trade-line.animated {
+            stroke-dasharray: 10, 5;
+            animation: dash 2s linear infinite;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -15;
+            }
+        }
+        
+        .trade-popup {
+            max-width: 450px;
+            min-width: 350px;
+        }
+        
+        .trade-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ff6b35;
+        }
+        
+        .trade-teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+        
+        .trade-team {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .trade-team-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            margin: 0 auto 8px;
+            display: block;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .trade-team-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .trade-team-gave,
+        .trade-team-received {
+            font-size: 0.8rem;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        .trade-team-gave strong,
+        .trade-team-received strong {
+            color: #ff6b35;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .trade-arrow {
+            font-size: 1.5rem;
+            color: #ff6b35;
+            font-weight: bold;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+        }
+        
+        .trade-description {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+            font-style: italic;
+            padding: 10px;
+            background: #f1f3f4;
+            border-radius: 6px;
+            border-left: 3px solid #ff6b35;
+        }
+        
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -207,9 +333,43 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         
+        .legend-line {
+            width: 20px;
+            height: 3px;
+            margin-right: 8px;
+            background: #ff6b35;
+        }
+        
         .legend-label {
             color: #333;
             font-size: 0.9rem;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 10000;
+            display: none;
+        }
+        
+        .error-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4444;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            max-width: 300px;
+            display: none;
         }
         
         @media (max-width: 768px) {
@@ -222,8 +382,13 @@
                 text-align: center;
             }
             
+            .filter-group {
+                justify-content: center;
+            }
+            
             .stats {
                 gap: 1rem;
+                justify-content: center;
             }
             
             .legend {
@@ -231,13 +396,17 @@
                 right: 10px;
                 left: 10px;
             }
+            
+            #map {
+                height: calc(100vh - 300px);
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🏀 NBA TEAMS MAP</h1>
-        <p>Interactive map showing all 30 NBA teams across North America</p>
+        <h1>🏀 NBA TEAMS & TRADES MAP</h1>
+        <p>Interactive map showing NBA teams and trade movements across the league</p>
     </div>
     
     <div class="controls">
@@ -259,6 +428,16 @@
                 <option value="Pacific">Pacific</option>
                 <option value="Southwest">Southwest</option>
             </select>
+            
+            <label for="yearFilter">Trade Year:</label>
+            <select id="yearFilter" class="filter-select">
+                <option value="all">All Years</option>
+            </select>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="showTrades" checked>
+                <label for="showTrades">Show Trades</label>
+            </div>
         </div>
         
         <div class="stats">
@@ -270,13 +449,21 @@
                 <div class="stat-number" id="visibleTeams">30</div>
                 <div class="stat-label">Visible Teams</div>
             </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalTrades">0</div>
+                <div class="stat-label">Total Trades</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="visibleTrades">0</div>
+                <div class="stat-label">Visible Trades</div>
+            </div>
         </div>
     </div>
     
     <div id="map"></div>
     
     <div class="legend">
-        <h4>Conference Legend</h4>
+        <h4>Map Legend</h4>
         <div class="legend-item">
             <div class="legend-color eastern"></div>
             <div class="legend-label">Eastern Conference</div>
@@ -285,20 +472,37 @@
             <div class="legend-color western"></div>
             <div class="legend-label">Western Conference</div>
         </div>
+        <div class="legend-item">
+            <div class="legend-line"></div>
+            <div class="legend-label">Trade Connection</div>
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">
+        <div>Loading trade data...</div>
+    </div>
+    
+    <div class="error-message" id="errorMessage">
+        <div id="errorText"></div>
     </div>
     
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <script>
-        class NBATeamsMap {
+    <script th:inline="none">
+        class NBATeamsTradesMap {
             constructor() {
                 this.map = null;
                 this.teams = [];
+                this.trades = [];
                 this.markers = [];
+                this.tradeLines = [];
+                this.svgLayer = null;
                 this.currentFilters = {
                     conference: 'all',
-                    division: 'all'
+                    division: 'all',
+                    year: 'all',
+                    showTrades: true
                 };
                 
                 this.init();
@@ -306,14 +510,20 @@
             
             async init() {
                 try {
+                    this.showLoading(true);
                     await this.loadTeams();
+                    await this.loadTrades();
                     this.initMap();
                     this.createMarkers();
+                    this.createTradeLines();
                     this.initEventListeners();
                     this.updateStats();
+                    this.populateYearFilter();
+                    this.showLoading(false);
                 } catch (error) {
                     console.error('Error initializing NBA Teams Map:', error);
-                    this.showError('Failed to load NBA teams data. Please try again later.');
+                    this.showError('Failed to load NBA teams and trades data. Please try again later.');
+                    this.showLoading(false);
                 }
             }
             
@@ -327,61 +537,34 @@
                     console.log('Loaded teams:', this.teams);
                 } catch (error) {
                     console.error('Error loading teams:', error);
-                    // Fallback to mock data if API fails
-                    this.teams = this.getMockTeams();
                 }
             }
             
-            getMockTeams() {
-                // Fallback mock data in case API is not available
-                return [
-                    {name: "Boston Celtics", city: "Boston", conference: "Eastern", division: "Atlantic", latitude: 42.3601, longitude: -71.0589, logoPath: "/images/teams/celtics.png", primaryColor: "#007A33"},
-                    {name: "Brooklyn Nets", city: "Brooklyn", conference: "Eastern", division: "Atlantic", latitude: 40.6782, longitude: -73.9442, logoPath: "/images/teams/nets.png", primaryColor: "#000000"},
-                    {name: "New York Knicks", city: "New York", conference: "Eastern", division: "Atlantic", latitude: 40.7128, longitude: -74.0060, logoPath: "/images/teams/knicks.png", primaryColor: "#006BB6"},
-                    {name: "Philadelphia 76ers", city: "Philadelphia", conference: "Eastern", division: "Atlantic", latitude: 39.9526, longitude: -75.1652, logoPath: "/images/teams/76ers.png", primaryColor: "#006BB6"},
-                    {name: "Toronto Raptors", city: "Toronto", conference: "Eastern", division: "Atlantic", latitude: 43.6532, longitude: -79.3832, logoPath: "/images/teams/raptors.png", primaryColor: "#CE1141"},
-                    {name: "Chicago Bulls", city: "Chicago", conference: "Eastern", division: "Central", latitude: 41.8781, longitude: -87.6298, logoPath: "/images/teams/bulls.png", primaryColor: "#CE1141"},
-                    {name: "Cleveland Cavaliers", city: "Cleveland", conference: "Eastern", division: "Central", latitude: 41.4993, longitude: -81.6944, logoPath: "/images/teams/cavaliers.png", primaryColor: "#860038"},
-                    {name: "Detroit Pistons", city: "Detroit", conference: "Eastern", division: "Central", latitude: 42.3314, longitude: -83.0458, logoPath: "/images/teams/pistons.png", primaryColor: "#C8102E"},
-                    {name: "Indiana Pacers", city: "Indianapolis", conference: "Eastern", division: "Central", latitude: 39.7684, longitude: -86.1581, logoPath: "/images/teams/pacers.png", primaryColor: "#002D62"},
-                    {name: "Milwaukee Bucks", city: "Milwaukee", conference: "Eastern", division: "Central", latitude: 43.0389, longitude: -87.9065, logoPath: "/images/teams/bucks.png", primaryColor: "#00471B"},
-                    {name: "Atlanta Hawks", city: "Atlanta", conference: "Eastern", division: "Southeast", latitude: 33.7490, longitude: -84.3880, logoPath: "/images/teams/hawks.png", primaryColor: "#E03A3E"},
-                    {name: "Charlotte Hornets", city: "Charlotte", conference: "Eastern", division: "Southeast", latitude: 35.2271, longitude: -80.8431, logoPath: "/images/teams/hornets.png", primaryColor: "#1D1160"},
-                    {name: "Miami Heat", city: "Miami", conference: "Eastern", division: "Southeast", latitude: 25.7617, longitude: -80.1918, logoPath: "/images/teams/heat.png", primaryColor: "#98002E"},
-                    {name: "Orlando Magic", city: "Orlando", conference: "Eastern", division: "Southeast", latitude: 28.5383, longitude: -81.3792, logoPath: "/images/teams/magic.png", primaryColor: "#0077C0"},
-                    {name: "Washington Wizards", city: "Washington", conference: "Eastern", division: "Southeast", latitude: 38.9072, longitude: -77.0369, logoPath: "/images/teams/wizards.png", primaryColor: "#002B5C"},
-                    {name: "Denver Nuggets", city: "Denver", conference: "Western", division: "Northwest", latitude: 39.7392, longitude: -104.9903, logoPath: "/images/teams/nuggets.png", primaryColor: "#0E2240"},
-                    {name: "Minnesota Timberwolves", city: "Minneapolis", conference: "Western", division: "Northwest", latitude: 44.9778, longitude: -93.2650, logoPath: "/images/teams/timberwolves.png", primaryColor: "#0C2340"},
-                    {name: "Oklahoma City Thunder", city: "Oklahoma City", conference: "Western", division: "Northwest", latitude: 35.4676, longitude: -97.5164, logoPath: "/images/teams/thunder.png", primaryColor: "#007AC1"},
-                    {name: "Portland Trail Blazers", city: "Portland", conference: "Western", division: "Northwest", latitude: 45.5152, longitude: -122.6784, logoPath: "/images/teams/blazers.png", primaryColor: "#E03A3E"},
-                    {name: "Utah Jazz", city: "Salt Lake City", conference: "Western", division: "Northwest", latitude: 40.7608, longitude: -111.8910, logoPath: "/images/teams/jazz.png", primaryColor: "#002B5C"},
-                    {name: "Golden State Warriors", city: "San Francisco", conference: "Western", division: "Pacific", latitude: 37.7749, longitude: -122.4194, logoPath: "/images/teams/warriors.png", primaryColor: "#1D428A"},
-                    {name: "LA Clippers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0522, longitude: -118.2437, logoPath: "/images/teams/clippers.png", primaryColor: "#C8102E"},
-                    {name: "Los Angeles Lakers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0522, longitude: -118.2437, logoPath: "/images/teams/lakers.png", primaryColor: "#552583"},
-                    {name: "Phoenix Suns", city: "Phoenix", conference: "Western", division: "Pacific", latitude: 33.4484, longitude: -112.0740, logoPath: "/images/teams/suns.png", primaryColor: "#1D1160"},
-                    {name: "Sacramento Kings", city: "Sacramento", conference: "Western", division: "Pacific", latitude: 38.5816, longitude: -121.4944, logoPath: "/images/teams/kings.png", primaryColor: "#5A2D81"},
-                    {name: "Dallas Mavericks", city: "Dallas", conference: "Western", division: "Southwest", latitude: 32.7767, longitude: -96.7970, logoPath: "/images/teams/mavericks.png", primaryColor: "#00538C"},
-                    {name: "Houston Rockets", city: "Houston", conference: "Western", division: "Southwest", latitude: 29.7604, longitude: -95.3698, logoPath: "/images/teams/rockets.png", primaryColor: "#CE1141"},
-                    {name: "Memphis Grizzlies", city: "Memphis", conference: "Western", division: "Southwest", latitude: 35.1495, longitude: -90.0490, logoPath: "/images/teams/grizzlies.png", primaryColor: "#5D76A9"},
-                    {name: "New Orleans Pelicans", city: "New Orleans", conference: "Western", division: "Southwest", latitude: 29.9511, longitude: -90.0715, logoPath: "/images/teams/pelicans.png", primaryColor: "#0C2340"},
-                    {name: "San Antonio Spurs", city: "San Antonio", conference: "Western", division: "Southwest", latitude: 29.4241, longitude: -98.4936, logoPath: "/images/teams/spurs.png", primaryColor: "#C4CED4"}
-                ];
+            async loadTrades() {
+                try {
+                    const response = await fetch('/api/trades');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    this.trades = await response.json();
+                    console.log('Loaded trades:', this.trades);
+                } catch (error) {
+                    console.error('Error loading trades:', error);
+                }
             }
             
             initMap() {
-                // Initialize the map centered on the US
                 this.map = L.map('map').setView([39.8283, -98.5795], 4);
                 
-                // Add tile layer with dark theme
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
                     subdomains: 'abcd',
                     maxZoom: 20
                 }).addTo(this.map);
                 
-                // Add custom map controls
                 this.map.on('zoomend', () => {
                     this.updateMarkerSizes();
+                    this.updateTradeLines();
                 });
             }
             
@@ -400,7 +583,6 @@
             }
             
             createTeamMarker(team) {
-                // Create custom icon with team colors
                 const iconHtml = `
                     <div class="custom-marker" style="background-color: ${team.primaryColor}; background-image: url('${team.logoPath}'); background-size: 70%; background-repeat: no-repeat; background-position: center;">
                     </div>
@@ -419,7 +601,6 @@
                     title: `${team.name} - ${team.city}`
                 });
                 
-                // Create popup content
                 const popupContent = `
                     <div class="team-popup">
                         <img class="team-logo" src="${team.logoPath}" alt="${team.name}" onerror="this.style.display='none'">
@@ -435,7 +616,6 @@
                     className: 'team-popup-container'
                 });
                 
-                // Add hover tooltip
                 marker.bindTooltip(`${team.name}<br>${team.city}`, {
                     permanent: false,
                     direction: 'top',
@@ -443,7 +623,6 @@
                     className: 'team-tooltip'
                 });
                 
-                // Add click event
                 marker.on('click', () => {
                     this.onTeamClick(team);
                 });
@@ -451,15 +630,261 @@
                 return marker;
             }
             
+            createTradeLines() {
+                this.tradeLines = [];
+                
+                this.trades.forEach(trade => {
+                    const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
+                    const toTeam = this.teams.find(t => t.name === trade.toTeam);
+                    
+                    if (fromTeam && toTeam) {
+                        const tradeLine = this.createTradeLine(trade, fromTeam, toTeam);
+                        this.tradeLines.push({
+                            line: tradeLine,
+                            trade: trade,
+                            fromTeam: fromTeam,
+                            toTeam: toTeam
+                        });
+                    }
+                });
+                
+                this.applyFilters();
+            }
+            
+            createTradeLine(trade, fromTeam, toTeam) {
+                // Calculate control point for curved line
+                const fromLat = fromTeam.latitude;
+                const fromLng = fromTeam.longitude;
+                const toLat = toTeam.latitude;
+                const toLng = toTeam.longitude;
+                
+                // Calculate midpoint
+                const midLat = (fromLat + toLat) / 2;
+                const midLng = (fromLng + toLng) / 2;
+                
+                // Calculate offset for curve (perpendicular to the line)
+                const distance = Math.sqrt(Math.pow(toLat - fromLat, 2) + Math.pow(toLng - fromLng, 2));
+                const curveOffset = Math.min(distance * 0.4, 8); // Increased curve intensity
+                
+                // Calculate perpendicular offset
+                const offsetLat = -(toLng - fromLng) / distance * curveOffset;
+                const offsetLng = (toLat - fromLat) / distance * curveOffset;
+                
+                // Create control point for curve
+                const controlLat = midLat + offsetLat;
+                const controlLng = midLng + offsetLng;
+                
+                // Create curved path with more points for smoothness
+                const curvePoints = this.generateCurvePoints(
+                    [fromLat, fromLng],
+                    [controlLat, controlLng], 
+                    [toLat, toLng],
+                    50 // Increased points for smoother curve
+                );
+                
+                const line = L.polyline(curvePoints, {
+                    color: '#ff6b35',
+                    weight: 3,
+                    opacity: 0.8,
+                    smoothFactor: 3.0, // Increased smoothing
+                    noClip: true // Prevent clipping during zoom
+                });
+                
+                // Store original curve data for zoom updates
+                line._tradeData = {
+                    fromTeam: fromTeam,
+                    toTeam: toTeam,
+                    curvePoints: curvePoints
+                };
+                
+                // Parse trade details to get what each team received
+                const tradeDetails = this.parseTradeDescription(trade.description, fromTeam.name, toTeam.name);
+                
+                const popupContent = `
+                    <div class="trade-popup">
+                        <div class="trade-header">${new Date(trade.tradeDate).toLocaleDateString()}</div>
+                        <div class="trade-teams">
+                            <div class="trade-team">
+                                <img src="${fromTeam.logoPath}" alt="${fromTeam.name}" class="trade-team-logo" onerror="this.style.display='none'">
+                                <div class="trade-team-name">${fromTeam.name}</div>
+                                <div class="trade-team-received">
+                                    <strong>Acquired:</strong><br>
+                                    ${tradeDetails.fromTeamGets.length > 0 ? tradeDetails.fromTeamGets.join('<br>') : 'No acquisitions listed'}
+                                </div>
+                            </div>
+                            <div class="trade-arrow">⇄</div>
+                            <div class="trade-team">
+                                <img src="${toTeam.logoPath}" alt="${toTeam.name}" class="trade-team-logo" onerror="this.style.display='none'">
+                                <div class="trade-team-name">${toTeam.name}</div>
+                                <div class="trade-team-received">
+                                    <strong>Acquired:</strong><br>
+                                    ${tradeDetails.toTeamGets.length > 0 ? tradeDetails.toTeamGets.join('<br>') : 'No acquisitions listed'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="trade-description">${trade.description}</div>
+                    </div>
+                `;
+                
+                line.bindPopup(popupContent, {
+                    maxWidth: 400,
+                    className: 'trade-popup-container'
+                });
+                
+                line.on('mouseover', function() {
+                    this.setStyle({ weight: 5, opacity: 1 });
+                });
+                
+                line.on('mouseout', function() {
+                    this.setStyle({ weight: 3, opacity: 0.8 });
+                });
+                
+                return line;
+            }
+            
+            parseTradeDescription(description, fromTeamName, toTeamName) {
+                const result = {
+                    fromTeamGets: [],
+                    toTeamGets: []
+                };
+                
+                try {
+                    // Create mapping for team name variations
+                    const getTeamVariations = (teamName) => {
+                        const variations = [teamName.toLowerCase()];
+                        
+                        // Add specific variations
+                        if (teamName.includes('Lakers')) variations.push('los angeles');
+                        if (teamName.includes('Clippers')) variations.push('la');
+                        if (teamName.includes('Warriors')) variations.push('golden state');
+                        if (teamName.includes('Thunder')) variations.push('oklahoma city');
+                        if (teamName.includes('Trail Blazers')) variations.push('portland');
+                        if (teamName.includes('Knicks')) variations.push('new york');
+                        if (teamName.includes('Pelicans')) variations.push('new orleans');
+                        if (teamName.includes('Spurs')) variations.push('san antonio');
+                        if (teamName.includes('76ers')) variations.push('philadelphia');
+                        if (teamName.includes('Nets')) variations.push('brooklyn');
+                        if (teamName.includes('Bulls')) variations.push('chicago');
+                        if (teamName.includes('Cavaliers')) variations.push('cleveland');
+                        if (teamName.includes('Pistons')) variations.push('detroit');
+                        if (teamName.includes('Pacers')) variations.push('indiana');
+                        if (teamName.includes('Bucks')) variations.push('milwaukee');
+                        if (teamName.includes('Hawks')) variations.push('atlanta');
+                        if (teamName.includes('Hornets')) variations.push('charlotte');
+                        if (teamName.includes('Heat')) variations.push('miami');
+                        if (teamName.includes('Magic')) variations.push('orlando');
+                        if (teamName.includes('Wizards')) variations.push('washington');
+                        if (teamName.includes('Nuggets')) variations.push('denver');
+                        if (teamName.includes('Timberwolves')) variations.push('minnesota');
+                        if (teamName.includes('Jazz')) variations.push('utah');
+                        if (teamName.includes('Suns')) variations.push('phoenix');
+                        if (teamName.includes('Kings')) variations.push('sacramento');
+                        if (teamName.includes('Mavericks')) variations.push('dallas');
+                        if (teamName.includes('Rockets')) variations.push('houston');
+                        if (teamName.includes('Grizzlies')) variations.push('memphis');
+                        if (teamName.includes('Celtics')) variations.push('boston');
+                        if (teamName.includes('Raptors')) variations.push('toronto');
+                        
+                        return variations;
+                    };
+                    
+                    const fromTeamVariations = getTeamVariations(fromTeamName);
+                    const toTeamVariations = getTeamVariations(toTeamName);
+                    
+                    // Look for the pattern: "TeamName acquires stuff" repeatedly
+                    const acquirePattern = /([A-Za-z\s]+?)\s+acquires\s+([^]*?)(?=\s+[A-Za-z\s]+\s+acquires|$)/gi;
+                    let match;
+                    
+                    while ((match = acquirePattern.exec(description)) !== null) {
+                        const teamName = match[1].trim().toLowerCase();
+                        let acquired = match[2].trim();
+                        
+                        // Clean up acquired text - remove any trailing team names that might have been captured
+                        acquired = acquired.replace(/\s+[A-Z][a-z]+(\s+[A-Z][a-z]+)*\s*$/, '').trim();
+                        
+                        // Add line breaks after ) unless it's at the end
+                        acquired = this.formatAcquisitionText(acquired);
+                        
+                        // Check if this team matches our fromTeam
+                        if (fromTeamVariations.some(variation => 
+                            teamName.includes(variation) || variation.includes(teamName))) {
+                            if (acquired) {
+                                result.fromTeamGets.push(acquired);
+                            }
+                        }
+                        // Check if this team matches our toTeam
+                        else if (toTeamVariations.some(variation => 
+                            teamName.includes(variation) || variation.includes(teamName))) {
+                            if (acquired) {
+                                result.toTeamGets.push(acquired);
+                            }
+                        }
+                    }
+                    
+                    // If the regex approach didn't work, try manual splitting
+                    if (result.fromTeamGets.length === 0 && result.toTeamGets.length === 0) {
+                        this.fallbackParsing(description, fromTeamName, toTeamName, result, fromTeamVariations, toTeamVariations);
+                    }
+                    
+                } catch (error) {
+                    console.warn('Error parsing trade description:', error);
+                }
+                
+                return result;
+            }
+            
+            formatAcquisitionText(text) {
+                // Add line breaks after ) unless it's the last character
+                return text.replace(/\)(?!\s*$)/g, ')<br>');
+            }
+            
+            generateCurvePoints(start, control, end, numPoints) {
+                const points = [];
+                for (let i = 0; i <= numPoints; i++) {
+                    const t = i / numPoints;
+                    // Quadratic Bézier curve formula
+                    const lat = Math.pow(1 - t, 2) * start[0] + 
+                             2 * (1 - t) * t * control[0] + 
+                             Math.pow(t, 2) * end[0];
+                    const lng = Math.pow(1 - t, 2) * start[1] + 
+                             2 * (1 - t) * t * control[1] + 
+                             Math.pow(t, 2) * end[1];
+                    points.push([lat, lng]);
+                }
+                return points;
+            }
+            
+            updateTradeLines() {
+                // Maintain curved lines during zoom/pan by preserving the original curve points
+                this.tradeLines.forEach(({line, trade, fromTeam, toTeam}) => {
+                    if (line._tradeData && line._tradeData.curvePoints) {
+                        // Keep the original curve points - don't regenerate straight lines
+                        line.setLatLngs(line._tradeData.curvePoints);
+                    }
+                });
+            }
+            
             onTeamClick(team) {
                 console.log('Team clicked:', team);
-                // You can add more click functionality here
-                // For example: show detailed team info, navigate to team page, etc.
+                this.highlightTeamTrades(team);
+            }
+            
+            highlightTeamTrades(team) {
+                this.tradeLines.forEach(({line, trade}) => {
+                    if (trade.fromTeam === team.name || trade.toTeam === team.name) {
+                        line.setStyle({ color: '#ffd700', weight: 5, opacity: 1 });
+                        setTimeout(() => {
+                            line.setStyle({ color: '#ff6b35', weight: 3, opacity: 0.8 });
+                        }, 3000);
+                    }
+                });
             }
             
             initEventListeners() {
                 const conferenceFilter = document.getElementById('conferenceFilter');
                 const divisionFilter = document.getElementById('divisionFilter');
+                const yearFilter = document.getElementById('yearFilter');
+                const showTrades = document.getElementById('showTrades');
                 
                 conferenceFilter.addEventListener('change', (e) => {
                     this.currentFilters.conference = e.target.value;
@@ -470,11 +895,36 @@
                     this.currentFilters.division = e.target.value;
                     this.applyFilters();
                 });
+                
+                yearFilter.addEventListener('change', (e) => {
+                    this.currentFilters.year = e.target.value;
+                    this.applyFilters();
+                });
+                
+                showTrades.addEventListener('change', (e) => {
+                    this.currentFilters.showTrades = e.target.checked;
+                    this.applyFilters();
+                });
+            }
+            
+            updateTradeAnimation() {
+                this.tradeLines.forEach(({line}) => {
+                    const pathElement = line.getElement();
+                    if (pathElement) {
+                        if (this.currentFilters.animateTrades) {
+                            pathElement.classList.add('animated');
+                        } else {
+                            pathElement.classList.remove('animated');
+                        }
+                    }
+                });
             }
             
             applyFilters() {
-                let visibleCount = 0;
+                let visibleTeamsCount = 0;
+                let visibleTradesCount = 0;
                 
+                // Filter teams
                 this.markers.forEach(({marker, team}) => {
                     const conferenceMatch = this.currentFilters.conference === 'all' || 
                                           team.conference === this.currentFilters.conference;
@@ -483,21 +933,67 @@
                     
                     if (conferenceMatch && divisionMatch) {
                         marker.addTo(this.map);
-                        visibleCount++;
+                        visibleTeamsCount++;
                     } else {
                         marker.remove();
                     }
                 });
                 
-                this.updateStats(visibleCount);
+                // Filter trades - only show trades between visible teams
+                this.tradeLines.forEach(({line, trade}) => {
+                    const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
+                    const toTeam = this.teams.find(t => t.name === trade.toTeam);
+                    
+                    if (!fromTeam || !toTeam) {
+                        line.remove();
+                        return;
+                    }
+                    
+                    // Check if both teams match the current filters
+                    const fromTeamMatches = (this.currentFilters.conference === 'all' || fromTeam.conference === this.currentFilters.conference) &&
+                                           (this.currentFilters.division === 'all' || fromTeam.division === this.currentFilters.division);
+                    
+                    const toTeamMatches = (this.currentFilters.conference === 'all' || toTeam.conference === this.currentFilters.conference) &&
+                                         (this.currentFilters.division === 'all' || toTeam.division === this.currentFilters.division);
+                    
+                    const yearMatch = this.currentFilters.year === 'all' || 
+                                    trade.year.toString() === this.currentFilters.year;
+                    const showTrades = this.currentFilters.showTrades;
+                    
+                    // Only show trade if BOTH teams match the conference/division filter
+                    if (fromTeamMatches && toTeamMatches && yearMatch && showTrades) {
+                        line.addTo(this.map);
+                        visibleTradesCount++;
+                    } else {
+                        line.remove();
+                    }
+                });
+                
+                this.updateStats(visibleTeamsCount, visibleTradesCount);
             }
             
-            updateStats(visibleCount = null) {
+            populateYearFilter() {
+                const yearFilter = document.getElementById('yearFilter');
+                const years = [...new Set(this.trades.map(trade => trade.year))].sort((a, b) => b - a);
+                
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                });
+            }
+            
+            updateStats(visibleTeamsCount = null, visibleTradesCount = null) {
                 const totalTeams = this.teams.length;
-                const visible = visibleCount !== null ? visibleCount : totalTeams;
+                const totalTrades = this.trades.length;
+                const visibleTeams = visibleTeamsCount !== null ? visibleTeamsCount : totalTeams;
+                const visibleTrades = visibleTradesCount !== null ? visibleTradesCount : totalTrades;
                 
                 document.getElementById('totalTeams').textContent = totalTeams;
-                document.getElementById('visibleTeams').textContent = visible;
+                document.getElementById('visibleTeams').textContent = visibleTeams;
+                document.getElementById('totalTrades').textContent = totalTrades;
+                document.getElementById('visibleTrades').textContent = visibleTrades;
             }
             
             updateMarkerSizes() {
@@ -516,32 +1012,26 @@
                 });
             }
             
+            showLoading(show) {
+                const loading = document.getElementById('loading');
+                loading.style.display = show ? 'block' : 'none';
+            }
+            
             showError(message) {
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #ff4444;
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                    z-index: 10000;
-                    max-width: 300px;
-                `;
-                errorDiv.textContent = message;
-                document.body.appendChild(errorDiv);
+                const errorDiv = document.getElementById('errorMessage');
+                const errorText = document.getElementById('errorText');
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
                 
                 setTimeout(() => {
-                    errorDiv.remove();
+                    errorDiv.style.display = 'none';
                 }, 5000);
             }
         }
         
         // Initialize the map when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new NBATeamsMap();
+            new NBATeamsTradesMap();
         });
     </script>
 </body>

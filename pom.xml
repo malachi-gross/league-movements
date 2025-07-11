@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
     
     <name>NBA Teams Map</name>
-    <description>Interactive map showing NBA team locations</description>
+    <description>Interactive map showing NBA team locations and trades</description>
     
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -36,6 +36,19 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+        
+        <!-- JSoup for web scraping -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.16.1</version>
+        </dependency>
+        
+        <!-- Jackson support for LocalDate -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
     </dependencies>
     

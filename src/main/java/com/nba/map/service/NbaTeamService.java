@@ -80,9 +80,9 @@ public class NbaTeamService {
         teamList.add(new NbaTeam("Golden State Warriors", "San Francisco", "Western", "Pacific", 
                 37.7749, -122.4194, "/images/teams/warriors.png", "#1D428A", "#FFC72C"));
         teamList.add(new NbaTeam("LA Clippers", "Los Angeles", "Western", "Pacific", 
-                34.0522, -118.2437, "/images/teams/clippers.png", "#C8102E", "#1D428A"));
+                34.0430, -118.2673, "/images/teams/clippers.png", "#C8102E", "#1D428A"));
         teamList.add(new NbaTeam("Los Angeles Lakers", "Los Angeles", "Western", "Pacific", 
-                34.0522, -118.2437, "/images/teams/lakers.png", "#552583", "#FDB927"));
+                34.0614, -118.2221, "/images/teams/lakers.png", "#552583", "#FDB927"));
         teamList.add(new NbaTeam("Phoenix Suns", "Phoenix", "Western", "Pacific", 
                 33.4484, -112.0740, "/images/teams/suns.png", "#1D1160", "#E56020"));
         teamList.add(new NbaTeam("Sacramento Kings", "Sacramento", "Western", "Pacific", 

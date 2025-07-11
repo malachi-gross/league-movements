@@ -1,5 +1,9 @@
 com/nba/map/NbaTeamsMapApplication.class
 com/nba/map/controller/NbaTeamController.class
+com/nba/map/util/TradeScraperUtil.class
 com/nba/map/service/NbaTeamService.class
 com/nba/map/model/NbaTeam.class
+com/nba/map/controller/TradeController.class
+com/nba/map/model/Trade.class
+com/nba/map/service/TradeService.class
 com/nba/map/controller/MapController.class
