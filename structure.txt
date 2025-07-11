@@ -1,0 +1,59 @@
+nba-teams-map/
+├── pom.xml
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── com/
+│       │       └── nba/
+│       │           └── map/
+│       │               ├── NbaTeamsMapApplication.java
+│       │               ├── controller/
+│       │               │   ├── MapController.java
+│       │               │   └── NbaTeamController.java
+│       │               ├── model/
+│       │               │   └── NbaTeam.java
+│       │               └── service/
+│       │                   └── NbaTeamService.java
+│       ├── resources/
+│       │   ├── application.properties
+│       │   ├── static/
+│       │   │   ├── css/
+│       │   │   │   └── (additional CSS files if needed)
+│       │   │   ├── js/
+│       │   │   │   └── (additional JS files if needed)
+│       │   │   └── images/
+│       │   │       └── teams/
+│       │   │           ├── celtics.png
+│       │   │           ├── nets.png
+│       │   │           ├── knicks.png
+│       │   │           ├── 76ers.png
+│       │   │           ├── raptors.png
+│       │   │           ├── bulls.png
+│       │   │           ├── cavaliers.png
+│       │   │           ├── pistons.png
+│       │   │           ├── pacers.png
+│       │   │           ├── bucks.png
+│       │   │           ├── hawks.png
+│       │   │           ├── hornets.png
+│       │   │           ├── heat.png
+│       │   │           ├── magic.png
+│       │   │           ├── wizards.png
+│       │   │           ├── nuggets.png
+│       │   │           ├── timberwolves.png
+│       │   │           ├── thunder.png
+│       │   │           ├── blazers.png
+│       │   │           ├── jazz.png
+│       │   │           ├── warriors.png
+│       │   │           ├── clippers.png
+│       │   │           ├── lakers.png
+│       │   │           ├── suns.png
+│       │   │           ├── kings.png
+│       │   │           ├── mavericks.png
+│       │   │           ├── rockets.png
+│       │   │           ├── grizzlies.png
+│       │   │           ├── pelicans.png
+│       │   │           └── spurs.png
+│       │   └── templates/
+│       │       └── index.html
+│       └── webapp/
+└── target/

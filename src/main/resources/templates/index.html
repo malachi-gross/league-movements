@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Teams Interactive Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background: #2a2a2a;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 2px solid #444;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #ccc;
+        }
+        
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background: #3a3a3a;
+            color: #ffffff;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #999;
+        }
+        
+        #map {
+            width: 100%;
+            height: calc(100vh - 200px);
+            border: none;
+        }
+        
+        .team-popup {
+            text-align: center;
+            max-width: 250px;
+        }
+        
+        .team-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .team-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .team-city {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .team-conference {
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .eastern {
+            background: #d32f2f;
+        }
+        
+        .western {
+            background: #1976d2;
+        }
+        
+        .custom-marker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-marker:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+        }
+        
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .leaflet-popup-tip {
+            background: white;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        
+        .legend h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .legend-label {
+            color: #333;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats {
+                gap: 1rem;
+            }
+            
+            .legend {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏀 NBA TEAMS MAP</h1>
+        <p>Interactive map showing all 30 NBA teams across North America</p>
+    </div>
+    
+    <div class="controls">
+        <div class="filter-group">
+            <label for="conferenceFilter">Conference:</label>
+            <select id="conferenceFilter" class="filter-select">
+                <option value="all">All Conferences</option>
+                <option value="Eastern">Eastern Conference</option>
+                <option value="Western">Western Conference</option>
+            </select>
+            
+            <label for="divisionFilter">Division:</label>
+            <select id="divisionFilter" class="filter-select">
+                <option value="all">All Divisions</option>
+                <option value="Atlantic">Atlantic</option>
+                <option value="Central">Central</option>
+                <option value="Southeast">Southeast</option>
+                <option value="Northwest">Northwest</option>
+                <option value="Pacific">Pacific</option>
+                <option value="Southwest">Southwest</option>
+            </select>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTeams">30</div>
+                <div class="stat-label">Total Teams</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="visibleTeams">30</div>
+                <div class="stat-label">Visible Teams</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="legend">
+        <h4>Conference Legend</h4>
+        <div class="legend-item">
+            <div class="legend-color eastern"></div>
+            <div class="legend-label">Eastern Conference</div>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color western"></div>
+            <div class="legend-label">Western Conference</div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        class NBATeamsMap {
+            constructor() {
+                this.map = null;
+                this.teams = [];
+                this.markers = [];
+                this.currentFilters = {
+                    conference: 'all',
+                    division: 'all'
+                };
+                
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    await this.loadTeams();
+                    this.initMap();
+                    this.createMarkers();
+                    this.initEventListeners();
+                    this.updateStats();
+                } catch (error) {
+                    console.error('Error initializing NBA Teams Map:', error);
+                    this.showError('Failed to load NBA teams data. Please try again later.');
+                }
+            }
+            
+            async loadTeams() {
+                try {
+                    const response = await fetch('/api/teams');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    this.teams = await response.json();
+                    console.log('Loaded teams:', this.teams);
+                } catch (error) {
+                    console.error('Error loading teams:', error);
+                    // Fallback to mock data if API fails
+                    this.teams = this.getMockTeams();
+                }
+            }
+            
+            getMockTeams() {
+                // Fallback mock data in case API is not available
+                return [
+                    {name: "Boston Celtics", city: "Boston", conference: "Eastern", division: "Atlantic", latitude: 42.3601, longitude: -71.0589, logoPath: "/images/teams/celtics.png", primaryColor: "#007A33"},
+                    {name: "Brooklyn Nets", city: "Brooklyn", conference: "Eastern", division: "Atlantic", latitude: 40.6782, longitude: -73.9442, logoPath: "/images/teams/nets.png", primaryColor: "#000000"},
+                    {name: "New York Knicks", city: "New York", conference: "Eastern", division: "Atlantic", latitude: 40.7128, longitude: -74.0060, logoPath: "/images/teams/knicks.png", primaryColor: "#006BB6"},
+                    {name: "Philadelphia 76ers", city: "Philadelphia", conference: "Eastern", division: "Atlantic", latitude: 39.9526, longitude: -75.1652, logoPath: "/images/teams/76ers.png", primaryColor: "#006BB6"},
+                    {name: "Toronto Raptors", city: "Toronto", conference: "Eastern", division: "Atlantic", latitude: 43.6532, longitude: -79.3832, logoPath: "/images/teams/raptors.png", primaryColor: "#CE1141"},
+                    {name: "Chicago Bulls", city: "Chicago", conference: "Eastern", division: "Central", latitude: 41.8781, longitude: -87.6298, logoPath: "/images/teams/bulls.png", primaryColor: "#CE1141"},
+                    {name: "Cleveland Cavaliers", city: "Cleveland", conference: "Eastern", division: "Central", latitude: 41.4993, longitude: -81.6944, logoPath: "/images/teams/cavaliers.png", primaryColor: "#860038"},
+                    {name: "Detroit Pistons", city: "Detroit", conference: "Eastern", division: "Central", latitude: 42.3314, longitude: -83.0458, logoPath: "/images/teams/pistons.png", primaryColor: "#C8102E"},
+                    {name: "Indiana Pacers", city: "Indianapolis", conference: "Eastern", division: "Central", latitude: 39.7684, longitude: -86.1581, logoPath: "/images/teams/pacers.png", primaryColor: "#002D62"},
+                    {name: "Milwaukee Bucks", city: "Milwaukee", conference: "Eastern", division: "Central", latitude: 43.0389, longitude: -87.9065, logoPath: "/images/teams/bucks.png", primaryColor: "#00471B"},
+                    {name: "Atlanta Hawks", city: "Atlanta", conference: "Eastern", division: "Southeast", latitude: 33.7490, longitude: -84.3880, logoPath: "/images/teams/hawks.png", primaryColor: "#E03A3E"},
+                    {name: "Charlotte Hornets", city: "Charlotte", conference: "Eastern", division: "Southeast", latitude: 35.2271, longitude: -80.8431, logoPath: "/images/teams/hornets.png", primaryColor: "#1D1160"},
+                    {name: "Miami Heat", city: "Miami", conference: "Eastern", division: "Southeast", latitude: 25.7617, longitude: -80.1918, logoPath: "/images/teams/heat.png", primaryColor: "#98002E"},
+                    {name: "Orlando Magic", city: "Orlando", conference: "Eastern", division: "Southeast", latitude: 28.5383, longitude: -81.3792, logoPath: "/images/teams/magic.png", primaryColor: "#0077C0"},
+                    {name: "Washington Wizards", city: "Washington", conference: "Eastern", division: "Southeast", latitude: 38.9072, longitude: -77.0369, logoPath: "/images/teams/wizards.png", primaryColor: "#002B5C"},
+                    {name: "Denver Nuggets", city: "Denver", conference: "Western", division: "Northwest", latitude: 39.7392, longitude: -104.9903, logoPath: "/images/teams/nuggets.png", primaryColor: "#0E2240"},
+                    {name: "Minnesota Timberwolves", city: "Minneapolis", conference: "Western", division: "Northwest", latitude: 44.9778, longitude: -93.2650, logoPath: "/images/teams/timberwolves.png", primaryColor: "#0C2340"},
+                    {name: "Oklahoma City Thunder", city: "Oklahoma City", conference: "Western", division: "Northwest", latitude: 35.4676, longitude: -97.5164, logoPath: "/images/teams/thunder.png", primaryColor: "#007AC1"},
+                    {name: "Portland Trail Blazers", city: "Portland", conference: "Western", division: "Northwest", latitude: 45.5152, longitude: -122.6784, logoPath: "/images/teams/blazers.png", primaryColor: "#E03A3E"},
+                    {name: "Utah Jazz", city: "Salt Lake City", conference: "Western", division: "Northwest", latitude: 40.7608, longitude: -111.8910, logoPath: "/images/teams/jazz.png", primaryColor: "#002B5C"},
+                    {name: "Golden State Warriors", city: "San Francisco", conference: "Western", division: "Pacific", latitude: 37.7749, longitude: -122.4194, logoPath: "/images/teams/warriors.png", primaryColor: "#1D428A"},
+                    {name: "LA Clippers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0522, longitude: -118.2437, logoPath: "/images/teams/clippers.png", primaryColor: "#C8102E"},
+                    {name: "Los Angeles Lakers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0522, longitude: -118.2437, logoPath: "/images/teams/lakers.png", primaryColor: "#552583"},
+                    {name: "Phoenix Suns", city: "Phoenix", conference: "Western", division: "Pacific", latitude: 33.4484, longitude: -112.0740, logoPath: "/images/teams/suns.png", primaryColor: "#1D1160"},
+                    {name: "Sacramento Kings", city: "Sacramento", conference: "Western", division: "Pacific", latitude: 38.5816, longitude: -121.4944, logoPath: "/images/teams/kings.png", primaryColor: "#5A2D81"},
+                    {name: "Dallas Mavericks", city: "Dallas", conference: "Western", division: "Southwest", latitude: 32.7767, longitude: -96.7970, logoPath: "/images/teams/mavericks.png", primaryColor: "#00538C"},
+                    {name: "Houston Rockets", city: "Houston", conference: "Western", division: "Southwest", latitude: 29.7604, longitude: -95.3698, logoPath: "/images/teams/rockets.png", primaryColor: "#CE1141"},
+                    {name: "Memphis Grizzlies", city: "Memphis", conference: "Western", division: "Southwest", latitude: 35.1495, longitude: -90.0490, logoPath: "/images/teams/grizzlies.png", primaryColor: "#5D76A9"},
+                    {name: "New Orleans Pelicans", city: "New Orleans", conference: "Western", division: "Southwest", latitude: 29.9511, longitude: -90.0715, logoPath: "/images/teams/pelicans.png", primaryColor: "#0C2340"},
+                    {name: "San Antonio Spurs", city: "San Antonio", conference: "Western", division: "Southwest", latitude: 29.4241, longitude: -98.4936, logoPath: "/images/teams/spurs.png", primaryColor: "#C4CED4"}
+                ];
+            }
+            
+            initMap() {
+                // Initialize the map centered on the US
+                this.map = L.map('map').setView([39.8283, -98.5795], 4);
+                
+                // Add tile layer with dark theme
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 20
+                }).addTo(this.map);
+                
+                // Add custom map controls
+                this.map.on('zoomend', () => {
+                    this.updateMarkerSizes();
+                });
+            }
+            
+            createMarkers() {
+                this.markers = [];
+                
+                this.teams.forEach(team => {
+                    const marker = this.createTeamMarker(team);
+                    this.markers.push({
+                        marker: marker,
+                        team: team
+                    });
+                });
+                
+                this.applyFilters();
+            }
+            
+            createTeamMarker(team) {
+                // Create custom icon with team colors
+                const iconHtml = `
+                    <div class="custom-marker" style="background-color: ${team.primaryColor}; background-image: url('${team.logoPath}'); background-size: 70%; background-repeat: no-repeat; background-position: center;">
+                    </div>
+                `;
+                
+                const customIcon = L.divIcon({
+                    html: iconHtml,
+                    className: 'custom-div-icon',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20],
+                    popupAnchor: [0, -20]
+                });
+                
+                const marker = L.marker([team.latitude, team.longitude], {
+                    icon: customIcon,
+                    title: `${team.name} - ${team.city}`
+                });
+                
+                // Create popup content
+                const popupContent = `
+                    <div class="team-popup">
+                        <img class="team-logo" src="${team.logoPath}" alt="${team.name}" onerror="this.style.display='none'">
+                        <div class="team-name">${team.name}</div>
+                        <div class="team-city">${team.city}</div>
+                        <div class="team-conference ${team.conference.toLowerCase()}">${team.conference} Conference</div>
+                        <div style="margin-top: 8px; font-size: 0.8rem; color: #888;">${team.division} Division</div>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent, {
+                    maxWidth: 250,
+                    className: 'team-popup-container'
+                });
+                
+                // Add hover tooltip
+                marker.bindTooltip(`${team.name}<br>${team.city}`, {
+                    permanent: false,
+                    direction: 'top',
+                    offset: [0, -10],
+                    className: 'team-tooltip'
+                });
+                
+                // Add click event
+                marker.on('click', () => {
+                    this.onTeamClick(team);
+                });
+                
+                return marker;
+            }
+            
+            onTeamClick(team) {
+                console.log('Team clicked:', team);
+                // You can add more click functionality here
+                // For example: show detailed team info, navigate to team page, etc.
+            }
+            
+            initEventListeners() {
+                const conferenceFilter = document.getElementById('conferenceFilter');
+                const divisionFilter = document.getElementById('divisionFilter');
+                
+                conferenceFilter.addEventListener('change', (e) => {
+                    this.currentFilters.conference = e.target.value;
+                    this.applyFilters();
+                });
+                
+                divisionFilter.addEventListener('change', (e) => {
+                    this.currentFilters.division = e.target.value;
+                    this.applyFilters();
+                });
+            }
+            
+            applyFilters() {
+                let visibleCount = 0;
+                
+                this.markers.forEach(({marker, team}) => {
+                    const conferenceMatch = this.currentFilters.conference === 'all' || 
+                                          team.conference === this.currentFilters.conference;
+                    const divisionMatch = this.currentFilters.division === 'all' || 
+                                        team.division === this.currentFilters.division;
+                    
+                    if (conferenceMatch && divisionMatch) {
+                        marker.addTo(this.map);
+                        visibleCount++;
+                    } else {
+                        marker.remove();
+                    }
+                });
+                
+                this.updateStats(visibleCount);
+            }
+            
+            updateStats(visibleCount = null) {
+                const totalTeams = this.teams.length;
+                const visible = visibleCount !== null ? visibleCount : totalTeams;
+                
+                document.getElementById('totalTeams').textContent = totalTeams;
+                document.getElementById('visibleTeams').textContent = visible;
+            }
+            
+            updateMarkerSizes() {
+                const zoom = this.map.getZoom();
+                const size = Math.max(30, Math.min(50, zoom * 6));
+                
+                this.markers.forEach(({marker}) => {
+                    const element = marker.getElement();
+                    if (element) {
+                        const markerDiv = element.querySelector('.custom-marker');
+                        if (markerDiv) {
+                            markerDiv.style.width = `${size}px`;
+                            markerDiv.style.height = `${size}px`;
+                        }
+                    }
+                });
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #ff4444;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    max-width: 300px;
+                `;
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+        }
+        
+        // Initialize the map when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new NBATeamsMap();
+        });
+    </script>
+</body>
+</html>
