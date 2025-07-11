@@ -92,7 +92,7 @@ public class NbaTeamService {
         teamList.add(new NbaTeam("Dallas Mavericks", "Dallas", "Western", "Southwest", 
                 32.7767, -96.7970, "/images/teams/mavericks.png", "#00538C", "#002F65"));
         teamList.add(new NbaTeam("Houston Rockets", "Houston", "Western", "Southwest", 
-                29.7604, -95.3698, "/images/teams/rockets.png", "#CE1141", "#000000"));
+                29.7604, -95.3698, "/images/teams/rockets.png", "#FFFFFF", "#CE1141"));
         teamList.add(new NbaTeam("Memphis Grizzlies", "Memphis", "Western", "Southwest", 
                 35.1495, -90.0490, "/images/teams/grizzlies.png", "#5D76A9", "#12173F"));
         teamList.add(new NbaTeam("New Orleans Pelicans", "New Orleans", "Western", "Southwest", 
