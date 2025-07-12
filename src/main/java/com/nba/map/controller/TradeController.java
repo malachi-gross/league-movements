@@ -25,6 +25,11 @@ public class TradeController {
         return tradeService.getTradesByYear(year);
     }
     
+    @GetMapping("/season/{season}")
+    public List<Trade> getTradesBySeason(@PathVariable String season) {
+        return tradeService.getTradesBySeason(season);
+    }
+    
     @GetMapping("/team/{teamName}")
     public List<Trade> getTradesByTeam(@PathVariable String teamName) {
         return tradeService.getTradesByTeam(teamName);
@@ -45,9 +50,29 @@ public class TradeController {
         return tradeService.getAvailableYears();
     }
     
-    @GetMapping("/stats/{year}")
-    public Map<String, Object> getTradeStatistics(@PathVariable int year) {
+    @GetMapping("/seasons")
+    public List<String> getAvailableSeasons() {
+        return tradeService.getAvailableSeasons();
+    }
+    
+    @GetMapping("/stats/year/{year}")
+    public Map<String, Object> getTradeStatisticsForYear(@PathVariable int year) {
         return tradeService.getTradeStatisticsForYear(year);
+    }
+    
+    @GetMapping("/stats/season/{season}")
+    public Map<String, Object> getTradeStatisticsForSeason(@PathVariable String season) {
+        return tradeService.getTradeStatisticsForSeason(season);
+    }
+    
+    @GetMapping("/cache/stats")
+    public Map<String, Object> getCacheStatistics() {
+        return tradeService.getCacheStatistics();
+    }
+    
+    @PostMapping("/cache/refresh")
+    public Map<String, Object> refreshCache() {
+        return tradeService.refreshCache();
     }
     
     @PostMapping("/scrape/{year}")
@@ -82,6 +107,77 @@ public class TradeController {
                 "success", false,
                 "message", "Error in bulk scraping: " + e.getMessage(),
                 "years", years
+            );
+        }
+    }
+    
+    @PostMapping("/scrape/historical")
+    public Map<String, Object> scrapeAllHistoricalTrades() {
+        return tradeService.scrapeAllHistoricalTrades();
+    }
+    
+    @PostMapping("/scrape/current-season")
+    public Map<String, Object> scrapeCurrentSeason() {
+        try {
+            List<Trade> scrapedTrades = tradeService.scrapeTradesForCurrentSeason();
+            return Map.of(
+                "success", true,
+                "message", "Successfully scraped " + scrapedTrades.size() + " trades for current season",
+                "tradesCount", scrapedTrades.size()
+            );
+        } catch (Exception e) {
+            return Map.of(
+                "success", false,
+                "message", "Error scraping current season trades: " + e.getMessage(),
+                "tradesCount", 0
+            );
+        }
+    }
+    
+    @PostMapping("/scrape/date-range")
+    public Map<String, Object> scrapeTradesForDateRange(
+            @RequestParam String startDate, 
+            @RequestParam String endDate) {
+        try {
+            List<Trade> scrapedTrades = tradeService.scrapeTradesForDateRange(
+                java.time.LocalDate.parse(startDate), 
+                java.time.LocalDate.parse(endDate)
+            );
+            return Map.of(
+                "success", true,
+                "message", "Successfully scraped " + scrapedTrades.size() + " trades for date range " + startDate + " to " + endDate,
+                "tradesCount", scrapedTrades.size(),
+                "startDate", startDate,
+                "endDate", endDate
+            );
+        } catch (Exception e) {
+            return Map.of(
+                "success", false,
+                "message", "Error scraping trades for date range: " + e.getMessage(),
+                "tradesCount", 0,
+                "startDate", startDate,
+                "endDate", endDate
+            );
+        }
+    }
+    
+    @GetMapping("/scrape/progress/{progressId}")
+    public Map<String, Object> getBulkScrapeProgress(@PathVariable String progressId) {
+        return tradeService.getBulkScrapeProgress(progressId);
+    }
+    
+    @PostMapping("/scrape/cleanup")
+    public Map<String, Object> cleanupProgress() {
+        try {
+            tradeService.cleanupProgress();
+            return Map.of(
+                "success", true,
+                "message", "Progress cleanup completed"
+            );
+        } catch (Exception e) {
+            return Map.of(
+                "success", false,
+                "message", "Error during cleanup: " + e.getMessage()
             );
         }
     }

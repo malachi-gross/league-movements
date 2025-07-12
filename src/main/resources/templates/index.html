@@ -1,46 +1,47 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Teams Interactive Map - Trades & Movement</title>
-    
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #1a1a1a;
             color: #ffffff;
         }
-        
+
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             padding: 1rem 2rem;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        
+
         .header h1 {
             font-size: 2.5rem;
             font-weight: 700;
             letter-spacing: 2px;
             margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
-        
+
         .header p {
             font-size: 1.1rem;
             opacity: 0.9;
         }
-        
+
         .controls {
             background: #2a2a2a;
             padding: 1rem 2rem;
@@ -51,21 +52,22 @@
             gap: 1rem;
             border-bottom: 2px solid #444;
         }
-        
+
         .filter-group {
             display: flex;
             gap: 1rem;
             align-items: center;
             flex-wrap: wrap;
         }
-        
+
         .filter-group label {
             font-weight: 600;
             color: #ccc;
             white-space: nowrap;
         }
-        
-        .filter-select, .filter-checkbox {
+
+        .filter-select,
+        .filter-checkbox {
             padding: 0.5rem 1rem;
             border: 1px solid #555;
             border-radius: 6px;
@@ -74,58 +76,58 @@
             font-size: 1rem;
             cursor: pointer;
         }
-        
+
         .filter-select:focus {
             outline: none;
             border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
-        
+
         .checkbox-container {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .checkbox-container input[type="checkbox"] {
             width: 18px;
             height: 18px;
             accent-color: #007bff;
         }
-        
+
         .stats {
             display: flex;
             gap: 2rem;
             align-items: center;
             flex-wrap: wrap;
         }
-        
+
         .stat-item {
             text-align: center;
         }
-        
+
         .stat-number {
             font-size: 1.5rem;
             font-weight: 700;
             color: #007bff;
         }
-        
+
         .stat-label {
             font-size: 0.9rem;
             color: #999;
         }
-        
+
         #map {
             width: 100%;
             height: calc(100vh - 250px);
             border: none;
         }
-        
+
         .team-popup {
             text-align: center;
             max-width: 250px;
         }
-        
+
         .team-logo {
             width: 60px;
             height: 60px;
@@ -133,22 +135,22 @@
             margin-bottom: 10px;
             border-radius: 50%;
             border: 3px solid #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
-        
+
         .team-name {
             font-size: 1.2rem;
             font-weight: 700;
             margin-bottom: 5px;
             color: #333;
         }
-        
+
         .team-city {
             font-size: 1rem;
             color: #666;
             margin-bottom: 8px;
         }
-        
+
         .team-conference {
             font-size: 0.9rem;
             padding: 4px 8px;
@@ -157,30 +159,30 @@
             font-weight: 600;
             display: inline-block;
         }
-        
+
         .eastern {
             background: #d32f2f;
         }
-        
+
         .western {
             background: #1976d2;
         }
-        
+
         .custom-marker {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             border: 3px solid #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .custom-marker:hover {
             transform: scale(1.1);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
         }
-        
+
         .trade-line {
             stroke: #ff6b35;
             stroke-width: 3;
@@ -189,23 +191,23 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         .trade-line:hover {
             stroke-width: 5;
             stroke-opacity: 1;
         }
-        
+
         @keyframes dash {
             to {
                 stroke-dashoffset: -15;
             }
         }
-        
+
         .trade-popup {
             max-width: 450px;
             min-width: 350px;
         }
-        
+
         .trade-header {
             font-size: 1rem;
             font-weight: 600;
@@ -215,7 +217,7 @@
             padding-bottom: 8px;
             border-bottom: 2px solid #ff6b35;
         }
-        
+
         .trade-teams {
             display: flex;
             align-items: center;
@@ -223,7 +225,7 @@
             margin-bottom: 15px;
             gap: 15px;
         }
-        
+
         .trade-team {
             flex: 1;
             text-align: center;
@@ -232,7 +234,7 @@
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
-        
+
         .trade-team-logo {
             width: 40px;
             height: 40px;
@@ -241,30 +243,30 @@
             display: block;
             border-radius: 50%;
             border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .trade-team-name {
             font-weight: 700;
             font-size: 0.9rem;
             color: #333;
             margin-bottom: 10px;
         }
-        
+
         .trade-team-gave,
         .trade-team-received {
             font-size: 0.8rem;
             color: #555;
             line-height: 1.4;
         }
-        
+
         .trade-team-gave strong,
         .trade-team-received strong {
             color: #ff6b35;
             display: block;
             margin-bottom: 5px;
         }
-        
+
         .trade-arrow {
             font-size: 1.5rem;
             color: #ff6b35;
@@ -275,7 +277,7 @@
             justify-content: center;
             width: 30px;
         }
-        
+
         .trade-description {
             font-size: 0.85rem;
             color: #666;
@@ -286,29 +288,29 @@
             border-radius: 6px;
             border-left: 3px solid #ff6b35;
         }
-        
+
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        
+
         .leaflet-popup-tip {
             background: white;
         }
-        
+
         .loading {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 20px;
             border-radius: 10px;
             z-index: 10000;
             display: none;
         }
-        
+
         .error-message {
             position: fixed;
             top: 20px;
@@ -317,7 +319,7 @@
             color: white;
             padding: 15px 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             z-index: 10000;
             max-width: 300px;
             display: none;
@@ -346,44 +348,45 @@
             stroke-width: 5;
             stroke-opacity: 1;
         }
-        
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .controls {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             .filter-group {
                 justify-content: center;
             }
-            
+
             .stats {
                 gap: 1rem;
                 justify-content: center;
             }
-            
+
             .legend {
                 bottom: 10px;
                 right: 10px;
                 left: 10px;
             }
-            
+
             #map {
                 height: calc(100vh - 300px);
             }
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <h1>🏀 NBA TEAMS & TRADES MAP</h1>
         <p>Interactive map showing NBA teams and trade movements across the league</p>
     </div>
-    
+
     <div class="controls">
         <div class="filter-group">
             <label for="conferenceFilter">Conference:</label>
@@ -392,7 +395,7 @@
                 <option value="Eastern">Eastern Conference</option>
                 <option value="Western">Western Conference</option>
             </select>
-            
+
             <label for="divisionFilter">Division:</label>
             <select id="divisionFilter" class="filter-select">
                 <option value="all">All Divisions</option>
@@ -408,18 +411,18 @@
             <select id="teamFilter" class="filter-select">
                 <option value="all">All Teams</option>
             </select>
-            
-            <label for="yearFilter">Trade Year:</label>
-            <select id="yearFilter" class="filter-select">
-                <option value="all">All Years</option>
+
+            <label for="seasonFilter">NBA Season:</label>
+            <select id="seasonFilter" class="filter-select">
+                <!-- Seasons will be populated by JavaScript, no "All Seasons" option -->
             </select>
-            
+
             <div class="checkbox-container">
                 <input type="checkbox" id="showTrades" checked>
                 <label for="showTrades">Show Trades</label>
             </div>
         </div>
-        
+
         <div class="stats">
             <div class="stat-item">
                 <div class="stat-number" id="totalTeams">30</div>
@@ -431,7 +434,7 @@
             </div>
             <div class="stat-item">
                 <div class="stat-number" id="totalTrades">0</div>
-                <div class="stat-label">Total Trades</div>
+                <div class="stat-label">Season Trades</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number" id="visibleTrades">0</div>
@@ -439,20 +442,20 @@
             </div>
         </div>
     </div>
-    
+
     <div id="map"></div>
-    
+
     <div class="loading" id="loading">
         <div>Loading trade data...</div>
     </div>
-    
+
     <div class="error-message" id="errorMessage">
         <div id="errorText"></div>
     </div>
-    
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <script th:inline="none">
         class NBATeamsTradesMap {
             constructor() {
@@ -466,14 +469,14 @@
                 this.currentFilters = {
                     conference: 'all',
                     division: 'all',
-                    year: 'all',
+                    season: '', // Will be set to first available season
                     team: 'all',
                     showTrades: true
                 };
-                
+
                 this.init();
             }
-            
+
             async init() {
                 try {
                     this.showLoading(true);
@@ -484,9 +487,9 @@
                     this.createMarkers();
                     this.createTradeLines();
                     this.initEventListeners();
-                    this.updateStats();
-                    this.populateYearFilter();
+                    this.populateSeasonFilter();
                     this.populateTeamFilter();
+                    this.updateStats();
                     this.showLoading(false);
                 } catch (error) {
                     console.error('Error initializing NBA Teams Map:', error);
@@ -494,7 +497,7 @@
                     this.showLoading(false);
                 }
             }
-            
+
             async loadTeams() {
                 try {
                     const response = await fetch('/api/teams');
@@ -508,7 +511,7 @@
                     this.teams = []
                 }
             }
-            
+
             async loadTrades() {
                 try {
                     const response = await fetch('/api/trades');
@@ -522,23 +525,23 @@
                     this.trades = [];
                 }
             }
-            
+
             initMap() {
                 this.map = L.map('map').setView([39.8283, -98.5795], 4);
-                
+
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
                     subdomains: 'abcd',
                     maxZoom: 20
                 }).addTo(this.map);
-                
+
                 this.map.on('zoomend', () => {
                     this.updateMarkerSizes();
-                    this.updateSVGTradeLines();
+                    this.updateTradeLinePositions();
                 });
 
                 this.map.on('moveend', () => {
-                    this.updateSVGTradeLines();
+                    this.updateTradeLinePositions();
                 });
             }
 
@@ -548,10 +551,10 @@
                 this.svgElement = d3.select(this.map.getPanes().overlayPane).select('svg');
                 this.tradesGroup = this.svgElement.append('g').attr('class', 'trades-group');
             }
-            
+
             createMarkers() {
                 this.markers = [];
-                
+
                 this.teams.forEach(team => {
                     const marker = this.createTeamMarker(team);
                     this.markers.push({
@@ -559,16 +562,16 @@
                         team: team
                     });
                 });
-                
+
                 this.applyFilters();
             }
-            
+
             createTeamMarker(team) {
                 const iconHtml = `
                     <div class="custom-marker" style="background-color: ${team.primaryColor}; background-image: url('${team.logoPath}'); background-size: 70%; background-repeat: no-repeat; background-position: center;">
                     </div>
                 `;
-                
+
                 const customIcon = L.divIcon({
                     html: iconHtml,
                     className: 'custom-div-icon',
@@ -576,12 +579,12 @@
                     iconAnchor: [20, 20],
                     popupAnchor: [0, -20]
                 });
-                
+
                 const marker = L.marker([team.latitude, team.longitude], {
                     icon: customIcon,
                     title: `${team.name} - ${team.city}`
                 });
-                
+
                 const popupContent = `
                     <div class="team-popup">
                         <img class="team-logo" src="${team.logoPath}" alt="${team.name}" onerror="this.style.display='none'">
@@ -591,55 +594,60 @@
                         <div style="margin-top: 8px; font-size: 0.8rem; color: #888;">${team.division} Division</div>
                     </div>
                 `;
-                
+
                 marker.bindPopup(popupContent, {
                     maxWidth: 250,
                     className: 'team-popup-container'
                 });
-                
+
                 marker.on('click', () => {
                     this.onTeamClick(team);
                 });
-                
+
                 // Reset trade lines when popup is closed
                 marker.on('popupclose', () => {
                     this.resetTradeLines();
                 });
-                
+
                 return marker;
             }
-            
+
             createTradeLines() {
                 if (this.trades.length === 0) {
                     this.trades = []
                 }
 
                 this.tradeLines = [];
-                
+
+                // Pre-create all trade line data structures
                 this.trades.forEach(trade => {
                     const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
                     const toTeam = this.teams.find(t => t.name === trade.toTeam);
-                    
+
                     if (fromTeam && toTeam) {
                         const tradeLineData = {
                             trade: trade,
                             fromTeam: fromTeam,
                             toTeam: toTeam,
-                            path: null // Will be created in updateSVGTradeLines
+                            path: null, // Will be created in renderAllTradeLines
+                            season: this.getTradeSeasonFromDate(trade.tradeDate) // Pre-calculate season
                         };
                         this.tradeLines.push(tradeLineData);
                     }
                 });
-                
-                this.updateSVGTradeLines();
+
+                // Render all trade lines once
+                this.renderAllTradeLines();
                 this.applyFilters();
             }
 
-            updateSVGTradeLines() {
+            renderAllTradeLines() {
                 if (!this.tradesGroup) return;
 
-                // Clear existing paths
+                // Clear any existing paths
                 this.tradesGroup.selectAll('path').remove();
+
+                console.log(`Rendering ${this.tradeLines.length} trade lines...`);
 
                 this.tradeLines.forEach(tradeLineData => {
                     const { trade, fromTeam, toTeam } = tradeLineData;
@@ -654,7 +662,7 @@
 
                     // Calculate distance for curve intensity
                     const distance = Math.sqrt(Math.pow(toPoint.x - fromPoint.x, 2) + Math.pow(toPoint.y - fromPoint.y, 2));
-                    const curveOffset = Math.min(distance * 0.3, 150); // Adjust curve intensity
+                    const curveOffset = Math.min(distance * 0.3, 150);
 
                     // Calculate perpendicular offset for curve direction
                     const angle = Math.atan2(toPoint.y - fromPoint.y, toPoint.x - fromPoint.x);
@@ -664,10 +672,10 @@
                     const controlX = midX + Math.cos(perpAngle) * curveOffset;
                     const controlY = midY + Math.sin(perpAngle) * curveOffset;
 
-                    // Create SVG path with quadratic Bézier curve
+                    // Create SVG path
                     const pathData = `M ${fromPoint.x} ${fromPoint.y} Q ${controlX} ${controlY} ${toPoint.x} ${toPoint.y}`;
 
-                    // Create the path element
+                    // Create the path element - initially hidden
                     const path = this.tradesGroup
                         .append('path')
                         .attr('d', pathData)
@@ -677,45 +685,33 @@
                         .style('stroke-opacity', 0.8)
                         .style('fill', 'none')
                         .style('cursor', 'pointer')
-                        .style('pointer-events', 'auto');
+                        .style('pointer-events', 'auto')
+                        .style('display', 'none'); // Start hidden
 
                     // Store reference to the path
                     tradeLineData.path = path;
 
-                    // Store trade data on the path element for easy access
-                    path.datum({trade, fromTeam, toTeam});
+                    // Store trade data on the path element
+                    path.datum({ trade, fromTeam, toTeam });
 
-                    // Add hover effects and click events
-                    path
-                        .on('mouseover', function(event, d) {
-                            d3.select(this)
-                                .style('stroke-width', 5)
-                                .style('stroke-opacity', 1);
-                        })
-                        .on('mouseout', function(event, d) {
-                            d3.select(this)
-                                .style('stroke-width', 3)
-                                .style('stroke-opacity', 0.8);
-                        })
-                        .on('click', (event, d) => {
-                            event.stopPropagation();
-                            // Get the actual point on the curve where the user clicked
-                            const pathElement = event.target;
-                            const pathLength = pathElement.getTotalLength();
-                            const midPoint = pathElement.getPointAtLength(pathLength / 2);
-                            
-                            // Convert SVG coordinates back to lat/lng
-                            const latLng = this.map.layerPointToLatLng([midPoint.x, midPoint.y]);
-                            
-                            this.showTradePopup(d.trade, d.fromTeam, d.toTeam, latLng);
-                        });
+                    // Add click event (hover will be added dynamically in applyFilters)
+                    path.on('click', (event, d) => {
+                        event.stopPropagation();
+                        const pathElement = event.target;
+                        const pathLength = pathElement.getTotalLength();
+                        const midPoint = pathElement.getPointAtLength(pathLength / 2);
+                        const latLng = this.map.layerPointToLatLng([midPoint.x, midPoint.y]);
+                        this.showTradePopup(d.trade, d.fromTeam, d.toTeam, latLng);
+                    });
                 });
+
+                console.log(`Finished rendering ${this.tradeLines.length} trade lines`);
             }
 
             showTradePopup(trade, fromTeam, toTeam, latLng = null) {
                 // Parse trade details to get what each team received
                 const tradeDetails = this.parseTradeDescription(trade.description, fromTeam.name, toTeam.name);
-                
+
                 const popupContent = `
                     <div class="trade-popup">
                         <div class="trade-header">${new Date(trade.tradeDate).toLocaleDateString()}</div>
@@ -750,22 +746,22 @@
                     maxWidth: 400,
                     className: 'trade-popup-container'
                 })
-                .setLatLng(popupLatLng)
-                .setContent(popupContent)
-                .openOn(this.map);
+                    .setLatLng(popupLatLng)
+                    .setContent(popupContent)
+                    .openOn(this.map);
             }
-            
+
             parseTradeDescription(description, fromTeamName, toTeamName) {
                 const result = {
                     fromTeamGets: [],
                     toTeamGets: []
                 };
-                
+
                 try {
                     // Create mapping for team name variations
                     const getTeamVariations = (teamName) => {
                         const variations = [teamName.toLowerCase()];
-                        
+
                         // Add specific variations
                         if (teamName.includes('Lakers')) variations.push('los angeles');
                         if (teamName.includes('Clippers')) variations.push('la');
@@ -797,77 +793,100 @@
                         if (teamName.includes('Grizzlies')) variations.push('memphis');
                         if (teamName.includes('Celtics')) variations.push('boston');
                         if (teamName.includes('Raptors')) variations.push('toronto');
-                        
+
                         return variations;
                     };
-                    
+
                     const fromTeamVariations = getTeamVariations(fromTeamName);
                     const toTeamVariations = getTeamVariations(toTeamName);
-                    
+
                     // Look for the pattern: "TeamName acquires stuff" repeatedly
                     const acquirePattern = /([A-Za-z\s]+?)\s+acquires\s+([^]*?)(?=\s+[A-Za-z\s]+\s+acquires|$)/gi;
                     let match;
-                    
+
                     while ((match = acquirePattern.exec(description)) !== null) {
                         const teamName = match[1].trim().toLowerCase();
                         let acquired = match[2].trim();
-                        
+
                         // Clean up acquired text - remove any trailing team names that might have been captured
                         acquired = acquired.replace(/\s+[A-Z][a-z]+(\s+[A-Z][a-z]+)*\s*$/, '').trim();
-                        
+
                         // Add line breaks after ) unless it's at the end
                         acquired = this.formatAcquisitionText(acquired);
-                        
+
                         // Check if this team matches our fromTeam
-                        if (fromTeamVariations.some(variation => 
+                        if (fromTeamVariations.some(variation =>
                             teamName.includes(variation) || variation.includes(teamName))) {
                             if (acquired) {
                                 result.fromTeamGets.push(acquired);
                             }
                         }
                         // Check if this team matches our toTeam
-                        else if (toTeamVariations.some(variation => 
+                        else if (toTeamVariations.some(variation =>
                             teamName.includes(variation) || variation.includes(teamName))) {
                             if (acquired) {
                                 result.toTeamGets.push(acquired);
                             }
                         }
                     }
-                    
+
                     // If the regex approach didn't work, try manual splitting
                     if (result.fromTeamGets.length === 0 && result.toTeamGets.length === 0) {
                         this.fallbackParsing(description, fromTeamName, toTeamName, result, fromTeamVariations, toTeamVariations);
                     }
-                    
+
                 } catch (error) {
                     console.warn('Error parsing trade description:', error);
                 }
-                
+
                 return result;
             }
-            
+
             formatAcquisitionText(text) {
                 // Add line breaks after ) unless it's the last character
                 return text.replace(/\)(?!\s*$)/g, ')<br>');
             }
-            
+
+            fallbackParsing(description, fromTeamName, toTeamName, result, fromTeamVariations, toTeamVariations) {
+                // Try splitting by common patterns if regex didn't work
+                const lines = description.split(/[.;]/).filter(line => line.trim());
+                
+                lines.forEach(line => {
+                    const cleanLine = line.trim().toLowerCase();
+                    
+                    // Look for "gets" or "receives" patterns
+                    if (cleanLine.includes('gets') || cleanLine.includes('receives') || cleanLine.includes('acquires')) {
+                        if (fromTeamVariations.some(variation => cleanLine.includes(variation))) {
+                            const acquired = line.trim();
+                            if (acquired) result.fromTeamGets.push(this.formatAcquisitionText(acquired));
+                        } else if (toTeamVariations.some(variation => cleanLine.includes(variation))) {
+                            const acquired = line.trim();
+                            if (acquired) result.toTeamGets.push(this.formatAcquisitionText(acquired));
+                        }
+                    }
+                });
+            }
+
             onTeamClick(team) {
                 console.log('Team clicked:', team);
                 this.highlightTeamTrades(team);
             }
-            
+
             highlightTeamTrades(team) {
-                this.tradeLines.forEach(({path, trade}) => {
+                this.tradeLines.forEach(({ path, trade, season }) => {
                     if (path && (trade.fromTeam === team.name || trade.toTeam === team.name)) {
-                        path.style('stroke', '#ffd700')
-                            .style('stroke-width', 5)
-                            .style('stroke-opacity', 1);
+                        // Only highlight if the trade is from the current season
+                        if (season === this.currentFilters.season) {
+                            path.style('stroke', '#ffd700')
+                                .style('stroke-width', 5)
+                                .style('stroke-opacity', 1);
+                        }
                     }
                 });
             }
-            
+
             resetTradeLines() {
-                this.tradeLines.forEach(({path}) => {
+                this.tradeLines.forEach(({ path }) => {
                     if (path) {
                         path.style('stroke', '#ff6b35')
                             .style('stroke-width', 3)
@@ -875,56 +894,71 @@
                     }
                 });
             }
-            
+
             initEventListeners() {
                 const conferenceFilter = document.getElementById('conferenceFilter');
                 const divisionFilter = document.getElementById('divisionFilter');
-                const yearFilter = document.getElementById('yearFilter');
+                const seasonFilter = document.getElementById('seasonFilter');
                 const teamFilter = document.getElementById('teamFilter');
                 const showTrades = document.getElementById('showTrades');
-                
+
                 conferenceFilter.addEventListener('change', (e) => {
                     this.currentFilters.conference = e.target.value;
                     this.applyFilters();
                 });
-                
+
                 divisionFilter.addEventListener('change', (e) => {
                     this.currentFilters.division = e.target.value;
                     this.applyFilters();
                 });
-                
-                yearFilter.addEventListener('change', (e) => {
-                    this.currentFilters.year = e.target.value;
+
+                seasonFilter.addEventListener('change', (e) => {
+                    this.currentFilters.season = e.target.value;
                     this.applyFilters();
                 });
-                
+
                 teamFilter.addEventListener('change', (e) => {
                     this.currentFilters.team = e.target.value;
                     this.applyFilters();
                 });
-                
+
                 showTrades.addEventListener('change', (e) => {
                     this.currentFilters.showTrades = e.target.checked;
                     this.applyFilters();
                 });
             }
-            
+
+            getTradeSeasonFromDate(tradeDate) {
+                const date = new Date(tradeDate);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1; // JavaScript months are 0-indexed
+
+                // NBA season runs from July 1st to June 30th
+                if (month >= 7) {
+                    // Trade is in second half of year (July-December), so it's the start of a season
+                    return `${year}-${String((year + 1) % 100).padStart(2, '0')}`;
+                } else {
+                    // Trade is in first half of year (January-June), so it's the end of a season
+                    return `${year - 1}-${String(year % 100).padStart(2, '0')}`;
+                }
+            }
+
             applyFilters() {
                 let visibleTeamsCount = 0;
                 let visibleTradesCount = 0;
-                
+
                 // Filter teams with opacity instead of removing
-                this.markers.forEach(({marker, team}) => {
-                    const conferenceMatch = this.currentFilters.conference === 'all' || 
-                                          team.conference === this.currentFilters.conference;
-                    const divisionMatch = this.currentFilters.division === 'all' || 
-                                        team.division === this.currentFilters.division;
-                    const teamMatch = this.currentFilters.team === 'all' || 
-                                     team.name === this.currentFilters.team;
-                    
+                this.markers.forEach(({ marker, team }) => {
+                    const conferenceMatch = this.currentFilters.conference === 'all' ||
+                        team.conference === this.currentFilters.conference;
+                    const divisionMatch = this.currentFilters.division === 'all' ||
+                        team.division === this.currentFilters.division;
+                    const teamMatch = this.currentFilters.team === 'all' ||
+                        team.name === this.currentFilters.team;
+
                     // Always add to map, but adjust opacity
                     marker.addTo(this.map);
-                    
+
                     if (conferenceMatch && divisionMatch && teamMatch) {
                         // Team matches filters - full opacity
                         marker.setOpacity(1);
@@ -936,87 +970,79 @@
                         this.setMarkerOpacity(marker, 0.15);
                     }
                 });
-                
-                // Filter trades with opacity - show all trades but adjust visibility
-                this.tradeLines.forEach(({path, trade}) => {
+
+                // Filter trades - only show trades from the current season
+                this.tradeLines.forEach(({ path, trade, season }) => {
                     if (!path) return;
 
                     const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
                     const toTeam = this.teams.find(t => t.name === trade.toTeam);
-                    
+
                     if (!fromTeam || !toTeam) {
                         path.style('display', 'none');
                         return;
                     }
+
+                    // First check if trade is from current season - if not, hide completely
+                    const isCurrentSeason = season === this.currentFilters.season;
                     
-                    // Check if teams match filters
+                    if (!isCurrentSeason || !this.currentFilters.showTrades) {
+                        path.style('display', 'none');
+                        return;
+                    }
+
+                    // Trade is from current season and trades are enabled, now check other filters
                     const fromTeamMatches = (this.currentFilters.conference === 'all' || fromTeam.conference === this.currentFilters.conference) &&
-                                           (this.currentFilters.division === 'all' || fromTeam.division === this.currentFilters.division) &&
-                                           (this.currentFilters.team === 'all' || fromTeam.name === this.currentFilters.team);
-                    
+                        (this.currentFilters.division === 'all' || fromTeam.division === this.currentFilters.division) &&
+                        (this.currentFilters.team === 'all' || fromTeam.name === this.currentFilters.team);
+
                     const toTeamMatches = (this.currentFilters.conference === 'all' || toTeam.conference === this.currentFilters.conference) &&
-                                         (this.currentFilters.division === 'all' || toTeam.division === this.currentFilters.division) &&
-                                         (this.currentFilters.team === 'all' || toTeam.name === this.currentFilters.team);
-                    
-                    const yearMatch = this.currentFilters.year === 'all' || 
-                                    trade.year.toString() === this.currentFilters.year;
-                    const showTrades = this.currentFilters.showTrades;
-                    
-                    if (showTrades) {
-                        path.style('display', 'block');
-                        
-                        // Determine opacity based on team and year matches
-                        let opacity = 0.8;
-                        let weight = 3;
-                        
-                        // If specific team is selected, highlight trades involving that team
-                        if (this.currentFilters.team !== 'all') {
-                            if (fromTeam.name === this.currentFilters.team || toTeam.name === this.currentFilters.team) {
-                                opacity = 1.0;
-                                weight = 4;
-                                visibleTradesCount++;
-                            } else {
-                                opacity = 0.1;
-                                weight = 2;
-                            }
-                        }
-                        // Otherwise use conference/division filtering
-                        else if ((fromTeamMatches && toTeamMatches) && yearMatch) {
-                            opacity = 0.8;
-                            weight = 3;
+                        (this.currentFilters.division === 'all' || toTeam.division === this.currentFilters.division) &&
+                        (this.currentFilters.team === 'all' || toTeam.name === this.currentFilters.team);
+
+                    // Show the trade line
+                    path.style('display', 'block');
+
+                    // Determine opacity based on team matches
+                    let opacity = 0.8;
+                    let weight = 3;
+
+                    // If specific team is selected, highlight trades involving that team
+                    if (this.currentFilters.team !== 'all') {
+                        if (fromTeam.name === this.currentFilters.team || toTeam.name === this.currentFilters.team) {
+                            opacity = 1.0;
+                            weight = 4;
                             visibleTradesCount++;
-                        } else if ((fromTeamMatches || toTeamMatches) && yearMatch) {
-                            // One team matches - medium opacity
-                            opacity = 0.3;
-                            weight = 2;
-                        } else if (yearMatch) {
-                            // Only year matches - low opacity
+                        } else {
                             opacity = 0.1;
                             weight = 2;
-                        } else {
-                            // Nothing matches - very low opacity
-                            opacity = 0.05;
-                            weight = 1;
                         }
-                        
-                        path.style('stroke-opacity', opacity)
-                            .style('stroke-width', weight);
-                        
-                        // Update cursor style based on visibility
-                        if (opacity > 0.2) {
-                            path.style('cursor', 'pointer');
-                        } else {
-                            path.style('cursor', 'default');
-                        }
-                        
+                    }
+                    // Otherwise use conference/division filtering
+                    else if (fromTeamMatches && toTeamMatches) {
+                        opacity = 0.8;
+                        weight = 3;
+                        visibleTradesCount++;
                     } else {
-                        path.style('display', 'none');
+                        // Teams don't match other filters - low opacity
+                        opacity = 0.1;
+                        weight = 2;
+                    }
+
+                    path.style('stroke-opacity', opacity)
+                        .style('stroke-width', weight);
+
+                    // Update cursor style based on visibility
+                    if (opacity > 0.2) {
+                        path.style('cursor', 'pointer');
+                    } else {
+                        path.style('cursor', 'default');
                     }
                 });
-                
+
                 this.updateStats(visibleTeamsCount, visibleTradesCount);
             }
-            
+
             setMarkerOpacity(marker, opacity) {
                 const element = marker.getElement();
                 if (element) {
@@ -1026,13 +1052,13 @@
                     }
                 }
             }
-            
+
             populateTeamFilter() {
                 const teamFilter = document.getElementById('teamFilter');
-                
+
                 // Sort teams alphabetically by name
                 const sortedTeams = [...this.teams].sort((a, b) => a.name.localeCompare(b.name));
-                
+
                 sortedTeams.forEach(team => {
                     const option = document.createElement('option');
                     option.value = team.name;
@@ -1040,36 +1066,60 @@
                     teamFilter.appendChild(option);
                 });
             }
-            
-            populateYearFilter() {
-                const yearFilter = document.getElementById('yearFilter');
-                const years = [...new Set(this.trades.map(trade => trade.year))].sort((a, b) => b - a);
-                
-                years.forEach(year => {
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    yearFilter.appendChild(option);
+
+            populateSeasonFilter() {
+                const seasonFilter = document.getElementById('seasonFilter');
+
+                // Get unique seasons from trades
+                const seasons = new Set();
+
+                this.trades.forEach(trade => {
+                    const season = this.getTradeSeasonFromDate(trade.tradeDate);
+                    seasons.add(season);
                 });
+
+                // Convert to array and sort in reverse order (newest first)
+                const sortedSeasons = Array.from(seasons).sort((a, b) => b.localeCompare(a));
+
+                sortedSeasons.forEach((season, index) => {
+                    const option = document.createElement('option');
+                    option.value = season;
+                    option.textContent = `${season} Season`;
+                    seasonFilter.appendChild(option);
+
+                    // Set the first (most recent) season as default
+                    if (index === 0) {
+                        option.selected = true;
+                        this.currentFilters.season = season;
+                    }
+                });
+
+                // Apply filters after populating to show only current season trades
+                this.applyFilters();
             }
-            
+
             updateStats(visibleTeamsCount = null, visibleTradesCount = null) {
                 const totalTeams = this.teams.length;
-                const totalTrades = this.trades.length;
-                const visibleTeams = visibleTeamsCount !== null ? visibleTeamsCount : totalTeams;
-                const visibleTrades = visibleTradesCount !== null ? visibleTradesCount : totalTrades;
                 
+                // Calculate total trades for current season only
+                const currentSeasonTrades = this.tradeLines.filter(
+                    ({ season }) => season === this.currentFilters.season
+                ).length;
+                
+                const visibleTeams = visibleTeamsCount !== null ? visibleTeamsCount : totalTeams;
+                const visibleTrades = visibleTradesCount !== null ? visibleTradesCount : currentSeasonTrades;
+
                 document.getElementById('totalTeams').textContent = totalTeams;
                 document.getElementById('visibleTeams').textContent = visibleTeams;
-                document.getElementById('totalTrades').textContent = totalTrades;
-                document.getElementById('visibleTrades').textContent = visibleTrades;
+                document.getElementById('totalTrades').textContent = currentSeasonTrades.toLocaleString();
+                document.getElementById('visibleTrades').textContent = visibleTrades.toLocaleString();
             }
-            
+
             updateMarkerSizes() {
                 const zoom = this.map.getZoom();
                 const size = Math.max(30, Math.min(50, zoom * 6));
-                
-                this.markers.forEach(({marker}) => {
+
+                this.markers.forEach(({ marker }) => {
                     const element = marker.getElement();
                     if (element) {
                         const markerDiv = element.querySelector('.custom-marker');
@@ -1080,24 +1130,30 @@
                     }
                 });
             }
-            
+
+            updateTradeLinePositions() {
+                // Re-render trade lines when map moves or zooms
+                this.renderAllTradeLines();
+                this.applyFilters();
+            }
+
             showLoading(show) {
                 const loading = document.getElementById('loading');
                 loading.style.display = show ? 'block' : 'none';
             }
-            
+
             showError(message) {
                 const errorDiv = document.getElementById('errorMessage');
                 const errorText = document.getElementById('errorText');
                 errorText.textContent = message;
                 errorDiv.style.display = 'block';
-                
+
                 setTimeout(() => {
                     errorDiv.style.display = 'none';
                 }, 5000);
             }
         }
-        
+
         // Initialize the map when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new NBATeamsTradesMap();
@@ -1105,4 +1161,5 @@
     </script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </body>
+
 </html>

@@ -91,22 +91,43 @@ public class TradeScraperUtil {
         Map.entry("HOU", "Houston Rockets"),
         Map.entry("MEM", "Memphis Grizzlies"),
         Map.entry("NOP", "New Orleans Pelicans"),
-        Map.entry("SAS", "San Antonio Spurs")
+        Map.entry("SAS", "San Antonio Spurs"),
+        
+        // Historical team names
+        Map.entry("Seattle SuperSonics", "Oklahoma City Thunder"),
+        Map.entry("Seattle", "Oklahoma City Thunder"),
+        Map.entry("New Jersey Nets", "Brooklyn Nets"),
+        Map.entry("New Jersey", "Brooklyn Nets"),
+        Map.entry("Charlotte Bobcats", "Charlotte Hornets"),
+        Map.entry("Vancouver Grizzlies", "Memphis Grizzlies"),
+        Map.entry("Vancouver", "Memphis Grizzlies"),
+        Map.entry("Washington Bullets", "Washington Wizards"),
+        Map.entry("New Orleans Hornets", "New Orleans Pelicans"),
+        Map.entry("New Orleans/Oklahoma City Hornets", "New Orleans Pelicans")
     );
     
     /**
      * Scrape trades from Spotrac for a specific year
      */
     public List<Trade> scrapeTradesForYear(int year) {
+        String startDate = year + "-01-01";
+        String endDate = year + "-12-31";
+        return scrapeTradesForDateRange(startDate, endDate);
+    }
+    
+    /**
+     * Scrape trades from Spotrac for a specific date range
+     */
+    public List<Trade> scrapeTradesForDateRange(String startDate, String endDate) {
         List<Trade> trades = new ArrayList<>();
         
         try {
-            String url = year == 0 ? SPOTRAC_BASE_URL : SPOTRAC_BASE_URL + "/" + year + "/start/" + year + "-01-01/end/" + year + "-12-31";
+            String url = SPOTRAC_BASE_URL + "/start/" + startDate + "/end/" + endDate;
             System.out.println("🌐 Scraping trades from: " + url);
             
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                    .timeout(15000)
+                    .timeout(30000) // Increased timeout for large date ranges
                     .get();
             
             System.out.println("📄 Page loaded successfully, parsing content...");
@@ -116,6 +137,7 @@ public class TradeScraperUtil {
             System.out.println("🔍 Found " + tradeElements.size() + " potential trade elements");
             
             LocalDate currentDate = null; // Track the current date
+            int tradesFound = 0;
             
             for (int i = 0; i < tradeElements.size(); i++) {
                 Element element = tradeElements.get(i);
@@ -123,20 +145,22 @@ public class TradeScraperUtil {
                 
                 // Check if this element contains just a date
                 if (isDateElement(elementText)) {
-                    currentDate = extractDateFromDateElement(elementText, year);
-                    System.out.println("📅 Found date element: " + currentDate);
+                    currentDate = extractDateFromDateElement(elementText);
                     continue; // Skip to next element
                 }
                 
                 // Check if this element contains trade information
                 if (containsTradeIndicators(elementText)) {
-                    System.out.println("🔍 Processing trade element with date: " + currentDate);
-                    
                     try {
-                        Trade trade = parseTradeElementWithDate(element, currentDate, year);
+                        Trade trade = parseTradeElementWithDate(element, currentDate);
                         if (trade != null && isValidTrade(trade)) {
                             trades.add(trade);
-                            System.out.println("✅ Parsed trade: " + trade.getFromTeam() + " → " + trade.getToTeam());
+                            tradesFound++;
+                            
+                            // Log progress for large scraping operations
+                            if (tradesFound % 50 == 0) {
+                                System.out.println("📊 Progress: Found " + tradesFound + " trades so far...");
+                            }
                         }
                     } catch (Exception e) {
                         System.err.println("❌ Error parsing trade element: " + e.getMessage());
@@ -147,13 +171,14 @@ public class TradeScraperUtil {
             // If no trades found with the above selectors, try alternative parsing
             if (trades.isEmpty()) {
                 System.out.println("⚠️ No trades found with primary selectors, trying alternative parsing...");
-                trades.addAll(parseAlternativeFormat(doc, year));
+                trades.addAll(parseAlternativeFormat(doc));
             }
             
-            System.out.println("🎯 Successfully scraped " + trades.size() + " trades for year " + year);
+            System.out.println("🎯 Successfully scraped " + trades.size() + " trades for date range " + startDate + " to " + endDate);
             
         } catch (Exception e) {
-            System.err.println("❌ Error scraping trades for year " + year + ": " + e.getMessage());
+            System.err.println("❌ Error scraping trades for date range " + startDate + " to " + endDate + ": " + e.getMessage());
+            e.printStackTrace();
         }
         
         return trades;
@@ -171,7 +196,7 @@ public class TradeScraperUtil {
     /**
      * Extract date from a date-only element
      */
-    private LocalDate extractDateFromDateElement(String text, int year) {
+    private LocalDate extractDateFromDateElement(String text) {
         try {
             Pattern datePattern = Pattern.compile("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d{1,2}),?\\s+(\\d{4})");
             Matcher matcher = datePattern.matcher(text);
@@ -184,21 +209,18 @@ public class TradeScraperUtil {
             System.err.println("❌ Error parsing date from date element: " + e.getMessage());
         }
         
-        return LocalDate.of(year > 0 ? year : 2025, 7, 1);
+        return LocalDate.now(); // Fallback to current date
     }
     
     /**
      * Parse a trade element using a previously found date
      */
-    private Trade parseTradeElementWithDate(Element element, LocalDate tradeDate, int year) {
+    private Trade parseTradeElementWithDate(Element element, LocalDate tradeDate) {
         try {
             String elementText = element.text();
             
-            System.out.println("🔍 Parsing trade with preset date: " + tradeDate);
-            System.out.println("📝 Trade text: " + elementText.substring(0, Math.min(100, elementText.length())));
-            
             // Use the provided date, or fall back to extracting from text
-            LocalDate finalDate = tradeDate != null ? tradeDate : extractDate(elementText, year);
+            LocalDate finalDate = tradeDate != null ? tradeDate : extractDateFromText(elementText);
             
             // Extract teams
             List<String> teams = extractTeams(element);
@@ -207,12 +229,16 @@ public class TradeScraperUtil {
             }
             
             if (teams.size() < 2) {
-                System.out.println("⚠️ Could not find 2 teams in trade");
                 return null;
             }
             
             String fromTeam = normalizeTeamName(teams.get(0));
             String toTeam = normalizeTeamName(teams.get(1));
+            
+            // Skip if teams couldn't be normalized (unknown teams)
+            if (fromTeam.isEmpty() || toTeam.isEmpty()) {
+                return null;
+            }
             
             // Extract players and assets
             List<String> players = extractPlayers(elementText);
@@ -232,7 +258,6 @@ public class TradeScraperUtil {
                 SPOTRAC_BASE_URL
             );
             
-            System.out.println("✅ Created trade: " + fromTeam + " → " + toTeam + " on " + finalDate);
             return trade;
             
         } catch (Exception e) {
@@ -242,69 +267,9 @@ public class TradeScraperUtil {
     }
     
     /**
-     * Parse a single trade element
-     */
-    @SuppressWarnings("unused")
-    private Trade parseTradelement(Element element, int year) {
-        try {
-            String elementText = element.text();
-            
-            // Skip if doesn't contain trade indicators
-            if (!containsTradeIndicators(elementText)) {
-                return null;
-            }
-            
-            System.out.println("🔍 Parsing trade text: " + elementText.substring(0, Math.min(150, elementText.length())));
-            
-            // Extract date - use the actual text, not just the element
-            LocalDate tradeDate = extractDate(elementText, year);
-            System.out.println("📅 Extracted trade date: " + tradeDate);
-            
-            // Extract teams
-            List<String> teams = extractTeams(element);
-            if (teams.size() < 2) {
-                teams = extractTeamsFromText(elementText);
-            }
-            
-            if (teams.size() < 2) {
-                System.out.println("⚠️ Could not find 2 teams in trade");
-                return null;
-            }
-            
-            String fromTeam = normalizeTeamName(teams.get(0));
-            String toTeam = normalizeTeamName(teams.get(1));
-            
-            // Extract players and assets
-            List<String> players = extractPlayers(elementText);
-            List<String> assets = extractAssets(elementText);
-            
-            // Generate trade ID
-            String tradeId = generateTradeId(tradeDate, fromTeam, toTeam);
-            
-            Trade trade = new Trade(
-                tradeId,
-                tradeDate,
-                fromTeam,
-                toTeam,
-                players,
-                assets,
-                elementText.trim(),
-                SPOTRAC_BASE_URL
-            );
-            
-            System.out.println("✅ Created trade: " + fromTeam + " → " + toTeam + " on " + tradeDate);
-            return trade;
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error parsing trade element: " + e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
      * Alternative parsing method for different HTML structures
      */
-    private List<Trade> parseAlternativeFormat(Document doc, int year) {
+    private List<Trade> parseAlternativeFormat(Document doc) {
         List<Trade> trades = new ArrayList<>();
         
         try {
@@ -314,7 +279,7 @@ public class TradeScraperUtil {
             for (Element element : textElements) {
                 String text = element.text();
                 if (containsTradeIndicators(text) && text.length() > 20) {
-                    Trade trade = parseTradeFromText(text, year);
+                    Trade trade = parseTradeFromText(text);
                     if (trade != null && isValidTrade(trade)) {
                         trades.add(trade);
                     }
@@ -331,10 +296,10 @@ public class TradeScraperUtil {
     /**
      * Parse trade information from raw text
      */
-    private Trade parseTradeFromText(String text, int year) {
+    private Trade parseTradeFromText(String text) {
         try {
             // Extract date
-            LocalDate tradeDate = extractDateFromText(text, year);
+            LocalDate tradeDate = extractDateFromText(text);
             
             // Extract teams using pattern matching
             List<String> teams = extractTeamsFromText(text);
@@ -344,6 +309,10 @@ public class TradeScraperUtil {
             
             String fromTeam = normalizeTeamName(teams.get(0));
             String toTeam = normalizeTeamName(teams.get(1));
+            
+            if (fromTeam.isEmpty() || toTeam.isEmpty()) {
+                return null;
+            }
             
             // Extract players and assets
             List<String> players = extractPlayers(text);
@@ -380,60 +349,24 @@ public class TradeScraperUtil {
     }
     
     /**
-     * Extract date from element text
+     * Extract date from text using various patterns
      */
-    private LocalDate extractDate(String text, int year) {
+    private LocalDate extractDateFromText(String text) {
         try {
-            System.out.println("🔍 Extracting date from text: '" + text.substring(0, Math.min(20, text.length())) + "'");
-            
-            // Simple pattern to match "Jun 15, 2025" format at the beginning
+            // More flexible date extraction
             Pattern datePattern = Pattern.compile("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d{1,2}),?\\s+(\\d{4})");
             Matcher matcher = datePattern.matcher(text);
             
             if (matcher.find()) {
-                String month = matcher.group(1);
-                String day = matcher.group(2);
-                String yearStr = matcher.group(3);
-                
-                String dateStr = month + " " + day + ", " + yearStr;
-                LocalDate parsedDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("MMM d, yyyy"));
-                
-                System.out.println("✅ Successfully parsed date: " + parsedDate + " from '" + matcher.group(0) + "'");
-                return parsedDate;
-            }
-            
-            System.out.println("❌ No date pattern found in: '" + text.substring(0, Math.min(50, text.length())) + "'");
-            
-        } catch (Exception e) {
-            System.err.println("❌ Error parsing date: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        // Fallback
-        LocalDate fallbackDate = LocalDate.of(year > 0 ? year : 2025, 7, 1);
-        System.out.println("🔄 Using fallback date: " + fallbackDate);
-        return fallbackDate;
-    }
-    
-    /**
-     * Extract date from text using various patterns
-     */
-    private LocalDate extractDateFromText(String text, int year) {
-        // More flexible date extraction
-        Pattern datePattern = Pattern.compile("(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d{1,2}),?\\s+(\\d{4})");
-        Matcher matcher = datePattern.matcher(text);
-        
-        if (matcher.find()) {
-            try {
                 String dateStr = matcher.group(1) + " " + matcher.group(2) + ", " + matcher.group(3);
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy");
                 return LocalDate.parse(dateStr, formatter);
-            } catch (Exception e) {
-                // Fall through to default
             }
+        } catch (Exception e) {
+            // Fall through to default
         }
         
-        return LocalDate.of(year > 0 ? year : LocalDate.now().getYear(), 1, 1);
+        return LocalDate.now();
     }
     
     /**
@@ -464,13 +397,23 @@ public class TradeScraperUtil {
      */
     private List<String> extractTeamsFromText(String text) {
         List<String> teams = new ArrayList<>();
+        Set<String> foundTeams = new HashSet<>();
         
-        // Check against known team names
-        for (String teamName : TEAM_ALIASES.keySet()) {
+        // Check against known team names (prioritize longer names first)
+        List<String> sortedTeamNames = new ArrayList<>(TEAM_ALIASES.keySet());
+        sortedTeamNames.sort((a, b) -> Integer.compare(b.length(), a.length()));
+        
+        for (String teamName : sortedTeamNames) {
             if (text.contains(teamName)) {
                 String normalizedName = TEAM_ALIASES.get(teamName);
-                if (!teams.contains(normalizedName)) {
+                if (!foundTeams.contains(normalizedName)) {
                     teams.add(normalizedName);
+                    foundTeams.add(normalizedName);
+                }
+                
+                // Stop after finding 2 teams
+                if (teams.size() >= 2) {
+                    break;
                 }
             }
         }
@@ -531,6 +474,9 @@ public class TradeScraperUtil {
         if (lowerText.contains("rights to")) {
             assets.add("Player Rights");
         }
+        if (lowerText.contains("future considerations")) {
+            assets.add("Future Considerations");
+        }
         
         return assets;
     }
@@ -545,9 +491,12 @@ public class TradeScraperUtil {
                lowerPhrase.equals("san antonio") ||
                lowerPhrase.equals("golden state") ||
                lowerPhrase.equals("oklahoma city") ||
+               lowerPhrase.equals("new orleans") ||
                lowerPhrase.equals("trade exception") ||
                lowerPhrase.equals("round pick") ||
-               lowerPhrase.equals("cash considerations");
+               lowerPhrase.equals("cash considerations") ||
+               lowerPhrase.equals("future considerations") ||
+               lowerPhrase.equals("player rights");
     }
     
     /**
@@ -592,8 +541,8 @@ public class TradeScraperUtil {
         List<Integer> years = new ArrayList<>();
         int currentYear = LocalDate.now().getYear();
         
-        // Add years from 2010 to current year
-        for (int year = currentYear; year >= 2010; year--) {
+        // Add years from 1989 to current year
+        for (int year = currentYear; year >= 1989; year--) {
             years.add(year);
         }
         

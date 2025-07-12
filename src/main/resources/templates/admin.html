@@ -132,6 +132,20 @@
             background: #c82333;
         }
         
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+        }
+        
         .status-message {
             padding: 1rem;
             border-radius: 6px;
@@ -176,6 +190,33 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
         }
         
         .year-grid {
@@ -266,6 +307,46 @@
             color: #555;
         }
         
+        .historical-section {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .historical-section h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .historical-section p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+        
+        .cache-info {
+            background: #e8f4fd;
+            border: 1px solid #b3d8f2;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        
+        .cache-info h3 {
+            color: #0c5460;
+            margin-bottom: 0.5rem;
+        }
+        
+        .date-range-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
@@ -282,24 +363,96 @@
             .year-grid {
                 grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
             }
+            
+            .date-range-inputs {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🏀 NBA Trade Data Management</h1>
-        <p>Scrape and manage NBA trade data from Spotrac</p>
+        <p>Scrape and manage NBA trade data from Spotrac (1989-Present)</p>
     </div>
     
     <div class="container">
+        <!-- Historical Scraping Section -->
+        <div class="historical-section">
+            <h2>🏛️ Historical Trade Archive</h2>
+            <p>Load the complete NBA trade history from 1989 to present day. This will cache all historical trades for instant access.</p>
+            <button class="btn btn-warning btn-large" onclick="scrapeAllHistorical()">
+                📚 Load All Historical Trades (1989-2025)
+            </button>
+            <div class="progress-container" id="historicalProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="historicalProgressFill"></div>
+                </div>
+                <div class="progress-text" id="historicalProgressText">Preparing...</div>
+            </div>
+        </div>
+
+        <!-- Cache Management -->
+        <div class="card">
+            <h2>💾 Cache Management</h2>
+            <div class="status-message" id="cacheStatus"></div>
+            
+            <div class="cache-info" id="cacheInfo">
+                <h3>Cache Information</h3>
+                <p>Loading cache statistics...</p>
+            </div>
+            
+            <button class="btn btn-primary" onclick="refreshCacheStats()">Refresh Cache Stats</button>
+            <button class="btn btn-secondary" onclick="refreshCache()">Reload Cache</button>
+        </div>
+        
+        <!-- Current Season Scraping -->
+        <div class="card">
+            <h2>🔄 Current Season</h2>
+            <div class="status-message" id="currentSeasonStatus"></div>
+            
+            <p>Scrape trades for the current NBA season (July 1st to June 30th):</p>
+            
+            <button class="btn btn-success" onclick="scrapeCurrentSeason()">Scrape Current Season</button>
+            
+            <div class="loading" id="currentSeasonLoading">
+                <div class="spinner"></div>
+                <p>Scraping current season trades...</p>
+            </div>
+        </div>
+
+        <!-- Date Range Scraping -->
+        <div class="card">
+            <h2>📅 Custom Date Range</h2>
+            <div class="status-message" id="dateRangeStatus"></div>
+            
+            <div class="date-range-inputs">
+                <div class="form-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" class="form-control" value="2024-01-01">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" class="form-control" value="2024-12-31">
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="scrapeDateRange()">Scrape Date Range</button>
+            
+            <div class="loading" id="dateRangeLoading">
+                <div class="spinner"></div>
+                <p>Scraping date range...</p>
+            </div>
+        </div>
+        
         <!-- Single Year Scraping -->
         <div class="card">
-            <h2>Scrape Single Year</h2>
+            <h2>📆 Single Year Scraping</h2>
             <div class="status-message" id="singleYearStatus"></div>
             
             <div class="form-group">
                 <label for="singleYear">Select Year:</label>
-                <input type="number" id="singleYear" class="form-control" min="2010" max="2025" value="2024" placeholder="Enter year (e.g., 2024)">
+                <input type="number" id="singleYear" class="form-control" min="1989" max="2025" value="2024" placeholder="Enter year (e.g., 2024)">
             </div>
             
             <button class="btn btn-primary" onclick="scrapeSingleYear()">Scrape Year</button>
@@ -313,7 +466,7 @@
         
         <!-- Bulk Year Scraping -->
         <div class="card">
-            <h2>Bulk Year Scraping</h2>
+            <h2>📊 Bulk Year Scraping</h2>
             <div class="status-message" id="bulkStatus"></div>
             
             <div class="form-group">
@@ -326,6 +479,7 @@
             <button class="btn btn-success" onclick="scrapeBulkYears()">Scrape Selected Years</button>
             <button class="btn btn-secondary" onclick="selectAllYears()">Select All</button>
             <button class="btn btn-secondary" onclick="clearAllYears()">Clear All</button>
+            <button class="btn btn-secondary" onclick="selectRecentYears()">Select Recent (Last 5 Years)</button>
             
             <div class="loading" id="bulkLoading">
                 <div class="spinner"></div>
@@ -335,7 +489,7 @@
         
         <!-- Data Overview -->
         <div class="card">
-            <h2>Current Data Overview</h2>
+            <h2>📈 Current Data Overview</h2>
             <div class="status-message" id="overviewStatus"></div>
             
             <button class="btn btn-primary" onclick="refreshOverview()">Refresh Overview</button>
@@ -347,7 +501,7 @@
         
         <!-- Recent Trades -->
         <div class="card">
-            <h2>Recent Trades</h2>
+            <h2>🕒 Recent Trades</h2>
             <div class="status-message" id="recentTradesStatus"></div>
             
             <button class="btn btn-primary" onclick="loadRecentTrades()">Load Recent Trades</button>
@@ -359,18 +513,31 @@
     </div>
     
     <script>
+        let historicalProgressInterval = null;
+        
         // Initialize the admin interface
         document.addEventListener('DOMContentLoaded', function() {
             populateYearGrid();
             refreshOverview();
+            refreshCacheStats();
+            setDefaultDates();
         });
+        
+        // Set default dates for date range picker
+        function setDefaultDates() {
+            const today = new Date();
+            const startOfYear = new Date(today.getFullYear(), 0, 1);
+            
+            document.getElementById('startDate').value = startOfYear.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        }
         
         // Populate the year selection grid
         function populateYearGrid() {
             const yearGrid = document.getElementById('yearGrid');
             const currentYear = new Date().getFullYear();
             
-            for (let year = currentYear; year >= 2010; year--) {
+            for (let year = currentYear; year >= 1989; year--) {
                 const yearCheckbox = document.createElement('div');
                 yearCheckbox.className = 'year-checkbox';
                 yearCheckbox.innerHTML = `
@@ -381,14 +548,207 @@
             }
         }
         
+        // Scrape all historical trades
+        async function scrapeAllHistorical() {
+            const btn = event.target;
+            const progressContainer = document.getElementById('historicalProgress');
+            const progressFill = document.getElementById('historicalProgressFill');
+            const progressText = document.getElementById('historicalProgressText');
+            
+            btn.disabled = true;
+            btn.textContent = 'Loading Historical Trades...';
+            progressContainer.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/trades/scrape/historical', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Start polling for progress
+                    historicalProgressInterval = setInterval(() => {
+                        pollHistoricalProgress(result.progressId, btn, progressContainer, progressFill, progressText);
+                    }, 2000);
+                } else {
+                    showError('Failed to start historical scraping: ' + result.message);
+                    btn.disabled = false;
+                    btn.textContent = '📚 Load All Historical Trades (1989-2025)';
+                    progressContainer.style.display = 'none';
+                }
+            } catch (error) {
+                showError('Error starting historical scraping: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = '📚 Load All Historical Trades (1989-2025)';
+                progressContainer.style.display = 'none';
+            }
+        }
+        
+        // Poll historical scraping progress
+        async function pollHistoricalProgress(progressId, btn, progressContainer, progressFill, progressText) {
+            try {
+                const response = await fetch(`/api/trades/scrape/progress/${progressId}`);
+                const progress = await response.json();
+                
+                if (progress.status === 'completed') {
+                    clearInterval(historicalProgressInterval);
+                    progressFill.style.width = '100%';
+                    progressText.textContent = `Completed! Found ${progress.tradesFound} trades`;
+                    btn.disabled = false;
+                    btn.textContent = '✅ Historical Trades Loaded';
+                    btn.className = 'btn btn-success btn-large';
+                    
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        refreshOverview();
+                        refreshCacheStats();
+                    }, 3000);
+                    
+                } else if (progress.status === 'error') {
+                    clearInterval(historicalProgressInterval);
+                    progressText.textContent = 'Error: ' + progress.message;
+                    btn.disabled = false;
+                    btn.textContent = '❌ Error Loading Trades';
+                    btn.className = 'btn btn-danger btn-large';
+                    
+                } else if (progress.status === 'in_progress') {
+                    const percentage = (progress.progress / progress.total) * 100;
+                    progressFill.style.width = percentage + '%';
+                    progressText.textContent = `${progress.message} (${progress.tradesFound} trades found)`;
+                }
+                
+            } catch (error) {
+                console.error('Error polling progress:', error);
+            }
+        }
+        
+        // Refresh cache statistics
+        async function refreshCacheStats() {
+            const cacheInfo = document.getElementById('cacheInfo');
+            const status = document.getElementById('cacheStatus');
+            
+            try {
+                const response = await fetch('/api/trades/cache/stats');
+                const stats = await response.json();
+                
+                const oldestTrade = stats.oldestTrade ? new Date(stats.oldestTrade).toLocaleDateString() : 'N/A';
+                const newestTrade = stats.newestTrade ? new Date(stats.newestTrade).toLocaleDateString() : 'N/A';
+                const cacheSize = (stats.cacheFileSizeBytes / 1024 / 1024).toFixed(2);
+                
+                cacheInfo.innerHTML = `
+                    <h3>Cache Information</h3>
+                    <p><strong>Trades in Memory:</strong> ${stats.totalTradesInMemory.toLocaleString()}</p>
+                    <p><strong>Cache File Size:</strong> ${cacheSize} MB</p>
+                    <p><strong>Available Seasons:</strong> ${stats.availableSeasons}</p>
+                    <p><strong>Date Range:</strong> ${oldestTrade} to ${newestTrade}</p>
+                    <p><strong>Cache File Exists:</strong> ${stats.cacheFileExists ? '✅ Yes' : '❌ No'}</p>
+                `;
+                
+                showStatus(status, 'Cache statistics refreshed', 'success');
+            } catch (error) {
+                showStatus(status, 'Error loading cache statistics: ' + error.message, 'error');
+            }
+        }
+        
+        // Refresh cache
+        async function refreshCache() {
+            const status = document.getElementById('cacheStatus');
+            
+            try {
+                const response = await fetch('/api/trades/cache/refresh', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(status, `Cache refreshed successfully. Loaded ${result.tradesLoaded} trades.`, 'success');
+                    refreshCacheStats();
+                } else {
+                    showStatus(status, result.message, 'error');
+                }
+            } catch (error) {
+                showStatus(status, 'Error refreshing cache: ' + error.message, 'error');
+            }
+        }
+        
+        // Scrape current season
+        async function scrapeCurrentSeason() {
+            const status = document.getElementById('currentSeasonStatus');
+            const loading = document.getElementById('currentSeasonLoading');
+            
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/trades/scrape/current-season', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(status, `Successfully scraped ${result.tradesCount} trades for current season`, 'success');
+                    refreshOverview();
+                } else {
+                    showStatus(status, result.message, 'error');
+                }
+            } catch (error) {
+                showStatus(status, `Error scraping current season: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Scrape date range
+        async function scrapeDateRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const status = document.getElementById('dateRangeStatus');
+            const loading = document.getElementById('dateRangeLoading');
+            
+            if (!startDate || !endDate) {
+                showStatus(status, 'Please select both start and end dates', 'error');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showStatus(status, 'Start date must be before end date', 'error');
+                return;
+            }
+            
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            
+            try {
+                const response = await fetch(`/api/trades/scrape/date-range?startDate=${startDate}&endDate=${endDate}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(status, `Successfully scraped ${result.tradesCount} trades for ${startDate} to ${endDate}`, 'success');
+                    refreshOverview();
+                } else {
+                    showStatus(status, result.message, 'error');
+                }
+            } catch (error) {
+                showStatus(status, `Error scraping date range: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
         // Scrape data for a single year
         async function scrapeSingleYear() {
             const year = document.getElementById('singleYear').value;
             const status = document.getElementById('singleYearStatus');
             const loading = document.getElementById('singleYearLoading');
             
-            if (!year || year < 2010 || year > 2025) {
-                showStatus(status, 'Please enter a valid year between 2010 and 2025', 'error');
+            if (!year || year < 1989 || year > 2025) {
+                showStatus(status, 'Please enter a valid year between 1989 and 2025', 'error');
                 return;
             }
             
@@ -404,6 +764,7 @@
                 
                 if (result.success) {
                     showStatus(status, `Successfully scraped ${result.tradesCount} trades for year ${year}`, 'success');
+                    refreshOverview();
                 } else {
                     showStatus(status, result.message, 'error');
                 }
@@ -441,6 +802,7 @@
                 
                 if (result.success) {
                     showStatus(status, `Successfully initiated bulk scraping for ${selectedYears.length} years`, 'success');
+                    refreshOverview();
                 } else {
                     showStatus(status, result.message, 'error');
                 }
@@ -469,6 +831,18 @@
             checkboxes.forEach(cb => cb.checked = false);
         }
         
+        // Select recent years (last 5)
+        function selectRecentYears() {
+            clearAllYears();
+            const currentYear = new Date().getFullYear();
+            for (let i = 0; i < 5; i++) {
+                const checkbox = document.getElementById(`year_${currentYear - i}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            }
+        }
+        
         // View statistics for a specific year
         async function viewYearStats() {
             const year = document.getElementById('singleYear').value;
@@ -480,7 +854,7 @@
             }
             
             try {
-                const response = await fetch(`/api/trades/stats/${year}`);
+                const response = await fetch(`/api/trades/stats/year/${year}`);
                 const stats = await response.json();
                 
                 const message = `Year ${year} Statistics: ${stats.totalTrades} trades, ${stats.teamsInvolved} teams involved, ${stats.playersTraded} players traded, ${stats.assetsTraded} assets traded`;
@@ -496,16 +870,16 @@
             const statsGrid = document.getElementById('statsGrid');
             
             try {
-                const [tradesResponse, yearsResponse] = await Promise.all([
+                const [tradesResponse, seasonsResponse] = await Promise.all([
                     fetch('/api/trades'),
-                    fetch('/api/trades/years')
+                    fetch('/api/trades/seasons')
                 ]);
                 
                 const trades = await tradesResponse.json();
-                const years = await yearsResponse.json();
+                const seasons = await seasonsResponse.json();
                 
                 const totalTrades = trades.length;
-                const totalYears = years.length;
+                const totalSeasons = seasons.length;
                 const recentTrades = trades.filter(trade => {
                     const tradeDate = new Date(trade.tradeDate);
                     const thirtyDaysAgo = new Date();
@@ -519,14 +893,19 @@
                     uniqueTeams.add(trade.toTeam);
                 });
                 
+                // Calculate date range
+                const tradeDates = trades.map(t => new Date(t.tradeDate));
+                const oldestDate = tradeDates.length > 0 ? new Date(Math.min(...tradeDates)).getFullYear() : 'N/A';
+                const newestDate = tradeDates.length > 0 ? new Date(Math.max(...tradeDates)).getFullYear() : 'N/A';
+                
                 statsGrid.innerHTML = `
                     <div class="stat-card">
-                        <div class="stat-number">${totalTrades}</div>
+                        <div class="stat-number">${totalTrades.toLocaleString()}</div>
                         <div class="stat-label">Total Trades</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number">${totalYears}</div>
-                        <div class="stat-label">Years with Data</div>
+                        <div class="stat-number">${totalSeasons}</div>
+                        <div class="stat-label">NBA Seasons</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number">${uniqueTeams.size}</div>
@@ -535,6 +914,14 @@
                     <div class="stat-card">
                         <div class="stat-number">${recentTrades}</div>
                         <div class="stat-label">Recent Trades (30 days)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${oldestDate}-${newestDate}</div>
+                        <div class="stat-label">Date Range</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${(trades.reduce((sum, t) => sum + t.playersTraded.length, 0)).toLocaleString()}</div>
+                        <div class="stat-label">Players Traded</div>
                     </div>
                 `;
                 
@@ -585,6 +972,12 @@
                     element.style.display = 'none';
                 }, 5000);
             }
+        }
+        
+        // Show error message
+        function showError(message) {
+            console.error(message);
+            // You could also show a toast notification here
         }
     </script>
 </body>
