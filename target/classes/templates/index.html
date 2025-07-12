@@ -195,11 +195,6 @@
             stroke-opacity: 1;
         }
         
-        .trade-line.animated {
-            stroke-dasharray: 10, 5;
-            animation: dash 2s linear infinite;
-        }
-        
         @keyframes dash {
             to {
                 stroke-dashoffset: -15;
@@ -327,6 +322,30 @@
             max-width: 300px;
             display: none;
         }
+
+        /* SVG trade lines styles */
+        .trade-svg-layer {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 600;
+        }
+
+        .trade-path {
+            stroke: #ff6b35;
+            stroke-width: 3;
+            stroke-opacity: 0.8;
+            fill: none;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+
+        .trade-path:hover {
+            stroke-width: 5;
+            stroke-opacity: 1;
+        }
         
         @media (max-width: 768px) {
             .header h1 {
@@ -443,6 +462,7 @@
                 this.markers = [];
                 this.tradeLines = [];
                 this.svgLayer = null;
+                this.svgElement = null;
                 this.currentFilters = {
                     conference: 'all',
                     division: 'all',
@@ -460,6 +480,7 @@
                     await this.loadTeams();
                     await this.loadTrades();
                     this.initMap();
+                    this.initSVGLayer();
                     this.createMarkers();
                     this.createTradeLines();
                     this.initEventListeners();
@@ -484,7 +505,7 @@
                     console.log('Loaded teams:', this.teams);
                 } catch (error) {
                     console.error('Error loading teams:', error);
-                    this.teams = this.getMockTeams();
+                    this.teams = []
                 }
             }
             
@@ -498,98 +519,8 @@
                     console.log('Loaded trades:', this.trades);
                 } catch (error) {
                     console.error('Error loading trades:', error);
-                    this.trades = []; // No fallback mock data
+                    this.trades = [];
                 }
-            }
-            
-            getMockTeams() {
-                return [
-                    {name: "Boston Celtics", city: "Boston", conference: "Eastern", division: "Atlantic", latitude: 42.3601, longitude: -71.0589, logoPath: "/images/teams/celtics.png", primaryColor: "#007A33"},
-                    {name: "Brooklyn Nets", city: "Brooklyn", conference: "Eastern", division: "Atlantic", latitude: 40.6782, longitude: -73.9442, logoPath: "/images/teams/nets.png", primaryColor: "#000000"},
-                    {name: "New York Knicks", city: "New York", conference: "Eastern", division: "Atlantic", latitude: 40.7128, longitude: -74.0060, logoPath: "/images/teams/knicks.png", primaryColor: "#006BB6"},
-                    {name: "Philadelphia 76ers", city: "Philadelphia", conference: "Eastern", division: "Atlantic", latitude: 39.9526, longitude: -75.1652, logoPath: "/images/teams/76ers.png", primaryColor: "#006BB6"},
-                    {name: "Toronto Raptors", city: "Toronto", conference: "Eastern", division: "Atlantic", latitude: 43.6532, longitude: -79.3832, logoPath: "/images/teams/raptors.png", primaryColor: "#CE1141"},
-                    {name: "Chicago Bulls", city: "Chicago", conference: "Eastern", division: "Central", latitude: 41.8781, longitude: -87.6298, logoPath: "/images/teams/bulls.png", primaryColor: "#CE1141"},
-                    {name: "Cleveland Cavaliers", city: "Cleveland", conference: "Eastern", division: "Central", latitude: 41.4993, longitude: -81.6944, logoPath: "/images/teams/cavaliers.png", primaryColor: "#860038"},
-                    {name: "Detroit Pistons", city: "Detroit", conference: "Eastern", division: "Central", latitude: 42.3314, longitude: -83.0458, logoPath: "/images/teams/pistons.png", primaryColor: "#C8102E"},
-                    {name: "Indiana Pacers", city: "Indianapolis", conference: "Eastern", division: "Central", latitude: 39.7684, longitude: -86.1581, logoPath: "/images/teams/pacers.png", primaryColor: "#002D62"},
-                    {name: "Milwaukee Bucks", city: "Milwaukee", conference: "Eastern", division: "Central", latitude: 43.0389, longitude: -87.9065, logoPath: "/images/teams/bucks.png", primaryColor: "#00471B"},
-                    {name: "Atlanta Hawks", city: "Atlanta", conference: "Eastern", division: "Southeast", latitude: 33.7490, longitude: -84.3880, logoPath: "/images/teams/hawks.png", primaryColor: "#E03A3E"},
-                    {name: "Charlotte Hornets", city: "Charlotte", conference: "Eastern", division: "Southeast", latitude: 35.2271, longitude: -80.8431, logoPath: "/images/teams/hornets.png", primaryColor: "#1D1160"},
-                    {name: "Miami Heat", city: "Miami", conference: "Eastern", division: "Southeast", latitude: 25.7617, longitude: -80.1918, logoPath: "/images/teams/heat.png", primaryColor: "#98002E"},
-                    {name: "Orlando Magic", city: "Orlando", conference: "Eastern", division: "Southeast", latitude: 28.5383, longitude: -81.3792, logoPath: "/images/teams/magic.png", primaryColor: "#0077C0"},
-                    {name: "Washington Wizards", city: "Washington", conference: "Eastern", division: "Southeast", latitude: 38.9072, longitude: -77.0369, logoPath: "/images/teams/wizards.png", primaryColor: "#002B5C"},
-                    {name: "Denver Nuggets", city: "Denver", conference: "Western", division: "Northwest", latitude: 39.7392, longitude: -104.9903, logoPath: "/images/teams/nuggets.png", primaryColor: "#0E2240"},
-                    {name: "Minnesota Timberwolves", city: "Minneapolis", conference: "Western", division: "Northwest", latitude: 44.9778, longitude: -93.2650, logoPath: "/images/teams/timberwolves.png", primaryColor: "#0C2340"},
-                    {name: "Oklahoma City Thunder", city: "Oklahoma City", conference: "Western", division: "Northwest", latitude: 35.4676, longitude: -97.5164, logoPath: "/images/teams/thunder.png", primaryColor: "#007AC1"},
-                    {name: "Portland Trail Blazers", city: "Portland", conference: "Western", division: "Northwest", latitude: 45.5152, longitude: -122.6784, logoPath: "/images/teams/blazers.png", primaryColor: "#E03A3E"},
-                    {name: "Utah Jazz", city: "Salt Lake City", conference: "Western", division: "Northwest", latitude: 40.7608, longitude: -111.8910, logoPath: "/images/teams/jazz.png", primaryColor: "#002B5C"},
-                    {name: "Golden State Warriors", city: "San Francisco", conference: "Western", division: "Pacific", latitude: 37.7749, longitude: -122.4194, logoPath: "/images/teams/warriors.png", primaryColor: "#1D428A"},
-                    {name: "LA Clippers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0430, longitude: -118.2673, logoPath: "/images/teams/clippers.png", primaryColor: "#C8102E"},
-                    {name: "Los Angeles Lakers", city: "Los Angeles", conference: "Western", division: "Pacific", latitude: 34.0614, longitude: -118.2221, logoPath: "/images/teams/lakers.png", primaryColor: "#552583"},
-                    {name: "Phoenix Suns", city: "Phoenix", conference: "Western", division: "Pacific", latitude: 33.4484, longitude: -112.0740, logoPath: "/images/teams/suns.png", primaryColor: "#1D1160"},
-                    {name: "Sacramento Kings", city: "Sacramento", conference: "Western", division: "Pacific", latitude: 38.5816, longitude: -121.4944, logoPath: "/images/teams/kings.png", primaryColor: "#5A2D81"},
-                    {name: "Dallas Mavericks", city: "Dallas", conference: "Western", division: "Southwest", latitude: 32.7767, longitude: -96.7970, logoPath: "/images/teams/mavericks.png", primaryColor: "#00538C"},
-                    {name: "Houston Rockets", city: "Houston", conference: "Western", division: "Southwest", latitude: 29.7604, longitude: -95.3698, logoPath: "/images/teams/rockets.png", primaryColor: "#CE1141"},
-                    {name: "Memphis Grizzlies", city: "Memphis", conference: "Western", division: "Southwest", latitude: 35.1495, longitude: -90.0490, logoPath: "/images/teams/grizzlies.png", primaryColor: "#5D76A9"},
-                    {name: "New Orleans Pelicans", city: "New Orleans", conference: "Western", division: "Southwest", latitude: 29.9511, longitude: -90.0715, logoPath: "/images/teams/pelicans.png", primaryColor: "#0C2340"},
-                    {name: "San Antonio Spurs", city: "San Antonio", conference: "Western", division: "Southwest", latitude: 29.4241, longitude: -98.4936, logoPath: "/images/teams/spurs.png", primaryColor: "#C4CED4"}
-                ];
-            }
-            
-            getMockTrades() {
-                return [
-                    {
-                        id: "trade_1",
-                        tradeDate: "2024-02-08",
-                        fromTeam: "Brooklyn Nets",
-                        toTeam: "Phoenix Suns", 
-                        playersTraded: ["Kevin Durant"],
-                        assetsTraded: ["2024 1st Round Pick"],
-                        description: "Brooklyn acquires Mikal Bridges (SF), Cam Johnson (SF), 2023 1st round pick (unprotected), 2025 1st round pick (protected), 2027 1st round pick (unprotected), 2029 1st round pick swap Phoenix acquires Kevin Durant (SF)",
-                        year: 2024
-                    },
-                    {
-                        id: "trade_2", 
-                        tradeDate: "2024-03-15",
-                        fromTeam: "Los Angeles Lakers",
-                        toTeam: "Minnesota Timberwolves",
-                        playersTraded: ["Russell Westbrook"],
-                        assetsTraded: ["2024 2nd Round Pick"],
-                        description: "Lakers acquires D'Angelo Russell (PG), Malik Beasley (SG), Jarred Vanderbilt (PF) Minnesota acquires Russell Westbrook (PG), 2027 1st round pick (unprotected), 2029 1st round pick swap",
-                        year: 2024
-                    },
-                    {
-                        id: "trade_3",
-                        tradeDate: "2023-02-14", 
-                        fromTeam: "Chicago Bulls",
-                        toTeam: "Toronto Raptors",
-                        playersTraded: ["DeMar DeRozan"],
-                        assetsTraded: ["2023 1st Round Pick"],
-                        description: "Chicago acquires OG Anunoby (SF), Gary Trent Jr. (SG) Toronto acquires DeMar DeRozan (SF), 2024 1st round pick (protected)",
-                        year: 2023
-                    },
-                    {
-                        id: "trade_4",
-                        tradeDate: "2024-06-27",
-                        fromTeam: "Miami Heat", 
-                        toTeam: "Boston Celtics",
-                        playersTraded: ["Tyler Herro"],
-                        assetsTraded: ["2025 1st Round Pick"],
-                        description: "Miami acquires Derrick White (PG), Robert Williams III (C) Boston acquires Tyler Herro (SG), 2025 1st round pick (lottery protected)",
-                        year: 2024
-                    },
-                    {
-                        id: "trade_5",
-                        tradeDate: "2023-12-20",
-                        fromTeam: "Golden State Warriors",
-                        toTeam: "Dallas Mavericks", 
-                        playersTraded: ["Klay Thompson"],
-                        assetsTraded: ["2024 2nd Round Pick"],
-                        description: "Golden State acquires Tim Hardaway Jr. (SG), Richaun Holmes (C), 2024 2nd round pick Dallas acquires Klay Thompson (SG), Moses Moody (SF)",
-                        year: 2023
-                    }
-                ];
             }
             
             initMap() {
@@ -603,8 +534,19 @@
                 
                 this.map.on('zoomend', () => {
                     this.updateMarkerSizes();
-                    this.updateTradeLines();
+                    this.updateSVGTradeLines();
                 });
+
+                this.map.on('moveend', () => {
+                    this.updateSVGTradeLines();
+                });
+            }
+
+            initSVGLayer() {
+                // Create SVG overlay layer
+                this.svgLayer = L.svg().addTo(this.map);
+                this.svgElement = d3.select(this.map.getPanes().overlayPane).select('svg');
+                this.tradesGroup = this.svgElement.append('g').attr('class', 'trades-group');
             }
             
             createMarkers() {
@@ -668,6 +610,10 @@
             }
             
             createTradeLines() {
+                if (this.trades.length === 0) {
+                    this.trades = []
+                }
+
                 this.tradeLines = [];
                 
                 this.trades.forEach(trade => {
@@ -675,66 +621,98 @@
                     const toTeam = this.teams.find(t => t.name === trade.toTeam);
                     
                     if (fromTeam && toTeam) {
-                        const tradeLine = this.createTradeLine(trade, fromTeam, toTeam);
-                        this.tradeLines.push({
-                            line: tradeLine,
+                        const tradeLineData = {
                             trade: trade,
                             fromTeam: fromTeam,
-                            toTeam: toTeam
-                        });
+                            toTeam: toTeam,
+                            path: null // Will be created in updateSVGTradeLines
+                        };
+                        this.tradeLines.push(tradeLineData);
                     }
                 });
                 
+                this.updateSVGTradeLines();
                 this.applyFilters();
             }
-            
-            createTradeLine(trade, fromTeam, toTeam) {
-                // Calculate control point for curved line
-                const fromLat = fromTeam.latitude;
-                const fromLng = fromTeam.longitude;
-                const toLat = toTeam.latitude;
-                const toLng = toTeam.longitude;
-                
-                // Calculate midpoint
-                const midLat = (fromLat + toLat) / 2;
-                const midLng = (fromLng + toLng) / 2;
-                
-                // Calculate offset for curve (perpendicular to the line)
-                const distance = Math.sqrt(Math.pow(toLat - fromLat, 2) + Math.pow(toLng - fromLng, 2));
-                const curveOffset = Math.min(distance * 0.4, 8); // Increased curve intensity
-                
-                // Calculate perpendicular offset
-                const offsetLat = -(toLng - fromLng) / distance * curveOffset;
-                const offsetLng = (toLat - fromLat) / distance * curveOffset;
-                
-                // Create control point for curve
-                const controlLat = midLat + offsetLat;
-                const controlLng = midLng + offsetLng;
-                
-                // Create curved path with more points for smoothness
-                const curvePoints = this.generateCurvePoints(
-                    [fromLat, fromLng],
-                    [controlLat, controlLng], 
-                    [toLat, toLng],
-                    50 // Increased points for smoother curve
-                );
-                
-                const line = L.polyline(curvePoints, {
-                    color: '#ff6b35',
-                    weight: 3,
-                    opacity: 0.8,
-                    smoothFactor: 3.0, // Increased smoothing
-                    noClip: true // Prevent clipping during zoom
+
+            updateSVGTradeLines() {
+                if (!this.tradesGroup) return;
+
+                // Clear existing paths
+                this.tradesGroup.selectAll('path').remove();
+
+                this.tradeLines.forEach(tradeLineData => {
+                    const { trade, fromTeam, toTeam } = tradeLineData;
+
+                    // Convert lat/lng to pixel coordinates
+                    const fromPoint = this.map.latLngToLayerPoint([fromTeam.latitude, fromTeam.longitude]);
+                    const toPoint = this.map.latLngToLayerPoint([toTeam.latitude, toTeam.longitude]);
+
+                    // Calculate control points for smooth Bézier curve
+                    const midX = (fromPoint.x + toPoint.x) / 2;
+                    const midY = (fromPoint.y + toPoint.y) / 2;
+
+                    // Calculate distance for curve intensity
+                    const distance = Math.sqrt(Math.pow(toPoint.x - fromPoint.x, 2) + Math.pow(toPoint.y - fromPoint.y, 2));
+                    const curveOffset = Math.min(distance * 0.3, 150); // Adjust curve intensity
+
+                    // Calculate perpendicular offset for curve direction
+                    const angle = Math.atan2(toPoint.y - fromPoint.y, toPoint.x - fromPoint.x);
+                    const perpAngle = angle + Math.PI / 2;
+
+                    // Control points for quadratic Bézier curve
+                    const controlX = midX + Math.cos(perpAngle) * curveOffset;
+                    const controlY = midY + Math.sin(perpAngle) * curveOffset;
+
+                    // Create SVG path with quadratic Bézier curve
+                    const pathData = `M ${fromPoint.x} ${fromPoint.y} Q ${controlX} ${controlY} ${toPoint.x} ${toPoint.y}`;
+
+                    // Create the path element
+                    const path = this.tradesGroup
+                        .append('path')
+                        .attr('d', pathData)
+                        .attr('class', 'trade-path')
+                        .style('stroke', '#ff6b35')
+                        .style('stroke-width', 3)
+                        .style('stroke-opacity', 0.8)
+                        .style('fill', 'none')
+                        .style('cursor', 'pointer')
+                        .style('pointer-events', 'auto');
+
+                    // Store reference to the path
+                    tradeLineData.path = path;
+
+                    // Store trade data on the path element for easy access
+                    path.datum({trade, fromTeam, toTeam});
+
+                    // Add hover effects and click events
+                    path
+                        .on('mouseover', function(event, d) {
+                            d3.select(this)
+                                .style('stroke-width', 5)
+                                .style('stroke-opacity', 1);
+                        })
+                        .on('mouseout', function(event, d) {
+                            d3.select(this)
+                                .style('stroke-width', 3)
+                                .style('stroke-opacity', 0.8);
+                        })
+                        .on('click', (event, d) => {
+                            event.stopPropagation();
+                            // Get the actual point on the curve where the user clicked
+                            const pathElement = event.target;
+                            const pathLength = pathElement.getTotalLength();
+                            const midPoint = pathElement.getPointAtLength(pathLength / 2);
+                            
+                            // Convert SVG coordinates back to lat/lng
+                            const latLng = this.map.layerPointToLatLng([midPoint.x, midPoint.y]);
+                            
+                            this.showTradePopup(d.trade, d.fromTeam, d.toTeam, latLng);
+                        });
                 });
-                
-                // Store original curve data for zoom updates
-                line._tradeData = {
-                    fromTeam: fromTeam,
-                    toTeam: toTeam,
-                    curvePoints: curvePoints,
-                    trade: trade
-                };
-                
+            }
+
+            showTradePopup(trade, fromTeam, toTeam, latLng = null) {
                 // Parse trade details to get what each team received
                 const tradeDetails = this.parseTradeDescription(trade.description, fromTeam.name, toTeam.name);
                 
@@ -763,28 +741,18 @@
                         <div class="trade-description">${trade.description}</div>
                     </div>
                 `;
-                
-                line.bindPopup(popupContent, {
+
+                // Use provided latLng or calculate midpoint as fallback
+                const popupLatLng = latLng || [(fromTeam.latitude + toTeam.latitude) / 2, (fromTeam.longitude + toTeam.longitude) / 2];
+
+                // Create and show popup
+                const popup = L.popup({
                     maxWidth: 400,
                     className: 'trade-popup-container'
-                });
-                
-                // Store references to hover functions so we can remove them later
-                line._hoverIn = function() {
-                    this.setStyle({ weight: 5, opacity: Math.min(1.0, this.options.opacity + 0.2) });
-                };
-                
-                line._hoverOut = function() {
-                    // Get the current filter state to restore proper opacity/weight
-                    const tradeLineData = this._tradeData;
-                    if (tradeLineData) {
-                        const currentOpacity = this.options.opacity;
-                        const currentWeight = this.options.weight;
-                        this.setStyle({ weight: currentWeight, opacity: currentOpacity });
-                    }
-                };
-                
-                return line;
+                })
+                .setLatLng(popupLatLng)
+                .setContent(popupContent)
+                .openOn(this.map);
             }
             
             parseTradeDescription(description, fromTeamName, toTeamName) {
@@ -883,48 +851,28 @@
                 return text.replace(/\)(?!\s*$)/g, ')<br>');
             }
             
-            generateCurvePoints(start, control, end, numPoints) {
-                const points = [];
-                for (let i = 0; i <= numPoints; i++) {
-                    const t = i / numPoints;
-                    // Quadratic Bézier curve formula
-                    const lat = Math.pow(1 - t, 2) * start[0] + 
-                             2 * (1 - t) * t * control[0] + 
-                             Math.pow(t, 2) * end[0];
-                    const lng = Math.pow(1 - t, 2) * start[1] + 
-                             2 * (1 - t) * t * control[1] + 
-                             Math.pow(t, 2) * end[1];
-                    points.push([lat, lng]);
-                }
-                return points;
-            }
-            
-            updateTradeLines() {
-                // Maintain curved lines during zoom/pan by preserving the original curve points
-                this.tradeLines.forEach(({line, trade, fromTeam, toTeam}) => {
-                    if (line._tradeData && line._tradeData.curvePoints) {
-                        // Keep the original curve points - don't regenerate straight lines
-                        line.setLatLngs(line._tradeData.curvePoints);
-                    }
-                });
-            }
-            
             onTeamClick(team) {
                 console.log('Team clicked:', team);
                 this.highlightTeamTrades(team);
             }
             
             highlightTeamTrades(team) {
-                this.tradeLines.forEach(({line, trade}) => {
-                    if (trade.fromTeam === team.name || trade.toTeam === team.name) {
-                        line.setStyle({ color: '#ffd700', weight: 5, opacity: 1 });
+                this.tradeLines.forEach(({path, trade}) => {
+                    if (path && (trade.fromTeam === team.name || trade.toTeam === team.name)) {
+                        path.style('stroke', '#ffd700')
+                            .style('stroke-width', 5)
+                            .style('stroke-opacity', 1);
                     }
                 });
             }
             
             resetTradeLines() {
-                this.tradeLines.forEach(({line, trade}) => {
-                    line.setStyle({ color: '#ff6b35', weight: 3, opacity: 0.8 });
+                this.tradeLines.forEach(({path}) => {
+                    if (path) {
+                        path.style('stroke', '#ff6b35')
+                            .style('stroke-width', 3)
+                            .style('stroke-opacity', 0.8);
+                    }
                 });
             }
             
@@ -961,19 +909,6 @@
                 });
             }
             
-            updateTradeAnimation() {
-                this.tradeLines.forEach(({line}) => {
-                    const pathElement = line.getElement();
-                    if (pathElement) {
-                        if (this.currentFilters.animateTrades) {
-                            pathElement.classList.add('animated');
-                        } else {
-                            pathElement.classList.remove('animated');
-                        }
-                    }
-                });
-            }
-            
             applyFilters() {
                 let visibleTeamsCount = 0;
                 let visibleTradesCount = 0;
@@ -1003,12 +938,14 @@
                 });
                 
                 // Filter trades with opacity - show all trades but adjust visibility
-                this.tradeLines.forEach(({line, trade}) => {
+                this.tradeLines.forEach(({path, trade}) => {
+                    if (!path) return;
+
                     const fromTeam = this.teams.find(t => t.name === trade.fromTeam);
                     const toTeam = this.teams.find(t => t.name === trade.toTeam);
                     
                     if (!fromTeam || !toTeam) {
-                        line.remove();
+                        path.style('display', 'none');
                         return;
                     }
                     
@@ -1026,7 +963,7 @@
                     const showTrades = this.currentFilters.showTrades;
                     
                     if (showTrades) {
-                        line.addTo(this.map);
+                        path.style('display', 'block');
                         
                         // Determine opacity based on team and year matches
                         let opacity = 0.8;
@@ -1062,45 +999,22 @@
                             weight = 1;
                         }
                         
-                        line.setStyle({ opacity: opacity, weight: weight });
+                        path.style('stroke-opacity', opacity)
+                            .style('stroke-width', weight);
                         
-                        // Manage hover events based on visibility
-                        this.updateTradeLineHover(line, opacity, weight);
+                        // Update cursor style based on visibility
+                        if (opacity > 0.2) {
+                            path.style('cursor', 'pointer');
+                        } else {
+                            path.style('cursor', 'default');
+                        }
                         
                     } else {
-                        line.remove();
+                        path.style('display', 'none');
                     }
                 });
                 
                 this.updateStats(visibleTeamsCount, visibleTradesCount);
-            }
-            
-            updateTradeLineHover(line, opacity, weight) {
-                // Remove existing hover events
-                line.off('mouseover');
-                line.off('mouseout');
-                
-                // Only add hover events if the line has significant visibility (opacity > 0.2)
-                if (opacity > 0.2) {
-                    line.on('mouseover', function() {
-                        this.setStyle({ 
-                            weight: Math.max(weight + 2, 5), 
-                            opacity: Math.min(1.0, opacity + 0.2) 
-                        });
-                    });
-                    
-                    line.on('mouseout', function() {
-                        this.setStyle({ weight: weight, opacity: opacity });
-                    });
-                    
-                    // Change cursor to pointer for interactive lines
-                    line.getElement().style.cursor = 'pointer';
-                } else {
-                    // For very low opacity lines, set cursor to default (not interactive)
-                    if (line.getElement()) {
-                        line.getElement().style.cursor = 'default';
-                    }
-                }
             }
             
             setMarkerOpacity(marker, opacity) {
@@ -1189,5 +1103,6 @@
             new NBATeamsTradesMap();
         });
     </script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </body>
 </html>
